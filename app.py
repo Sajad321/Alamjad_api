@@ -7,13 +7,16 @@ def create_app(test_config=None):
 
     setup_db(app)
 
-    from routes.salesmen import SalesmenRoutes
+    from routes.salesmen import SalesmenRoutes, UserRoute
     app.register_blueprint(SalesmenRoutes)
+    app.register_blueprint(UserRoute)
     from routes.pharmacies import PharmaciesRoutes
     app.register_blueprint(PharmaciesRoutes)
     from routes.doctors import DoctorsRoutes
     app.register_blueprint(DoctorsRoutes)
-    
+    from routes.company import Companyroute, Itemroute
+    app.register_blueprint(Companyroute)
+    app.register_blueprint(Itemroute)
     return app
 
 
