@@ -41,25 +41,25 @@ class Base(db.Model):
 
 
 class User(Base):
-    __tablename__ = 'User'
+    __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     username = Column(String(200), unique=True)
     email = Column(String(200), nullable=False, unique=True)
     phone_number = Column(Integer, nullable=False)
-    password = Column(String(200), nullable=False)
+    password = Column(String(200))
     date_of_joining = Column(Date)
     role = Column(Integer, nullable=False)
     histories_of_user_activity = db.relationship(
-        'History_of_user_activity', backref=db.backref('user', uselist=False), lazy='dynamic')
-    orders = db.relationship('Order', backref=db.backref(
+        'history_of_user_activity', backref=db.backref('user', uselist=False), lazy='dynamic')
+    orders = db.relationship('order', backref=db.backref(
         'user', uselist=False), lazy='dynamic')
     histories_of_company = db.relationship(
-        'History_of_company', backref=db.backref('user', uselist=False), lazy='dynamic')
+        'history_of_company', backref=db.backref('user', uselist=False), lazy='dynamic')
     histories_of_marketing = db.relationship(
-        'History_of_marketing', backref=db.backref('user', uselist=False), lazy='dynamic')
-    reports = db.relationship('Report', backref=db.backref(
+        'history_of_marketing', backref=db.backref('user', uselist=False), lazy='dynamic')
+    reports = db.relationship('report', backref=db.backref(
         'user', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -74,18 +74,18 @@ class User(Base):
 
 
 class History_of_user_activity(Base):
-    __tablename__ = 'History_of_user_activity'
+    __tablename__ = 'history_of_user_activity'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey('User.id'), nullable=False)
-    zone_id = Column(Integer, ForeignKey('Zone.id'), nullable=False)
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
-    doctor_id = Column(Integer, ForeignKey('Doctor.id'))
+    user_id = Column(ForeignKey('user.id'), nullable=False)
+    zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctor.id'))
     date = Column(Date)
-    histories_of_doctor = db.relationship('History_of_doctor', backref=db.backref(
-        'History_of_user_activity', uselist=False), lazy='dynamic')
-    histories_of_pharmacy = db.relationship('History_of_pharmacy', backref=db.backref(
-        'History_of_user_activity', uselist=False), lazy='dynamic')
+    histories_of_doctor = db.relationship('history_of_doctor', backref=db.backref(
+        'history_of_user_activity', uselist=False), lazy='dynamic')
+    histories_of_pharmacy = db.relationship('history_of_pharmacy', backref=db.backref(
+        'history_of_user_activity', uselist=False), lazy='dynamic')
 
     def format(self):
         return {
@@ -99,18 +99,18 @@ class History_of_user_activity(Base):
 
 
 class Zone(Base):
-    __tablename__ = 'Zone'
+    __tablename__ = 'zone'
     id = Column(Integer, primary_key=True)
     zone = Column(String(100), nullable=False)
     histories_of_user_activity = db.relationship(
-        'History_of_user_activity', backref=db.backref('zone', uselist=False), lazy='dynamic')
-    pharmacies = db.relationship('Pharmacy', backref=db.backref(
+        'history_of_user_activity', backref=db.backref('zone', uselist=False), lazy='dynamic')
+    pharmacies = db.relationship('pharmacy', backref=db.backref(
         'zone', uselist=False), lazy='dynamic')
-    orders = db.relationship('Order', backref=db.backref(
+    orders = db.relationship('order', backref=db.backref(
         'zone', uselist=False), lazy='dynamic')
-    doctors = db.relationship('Doctor', backref=db.backref(
+    doctors = db.relationship('doctor', backref=db.backref(
         'zone', uselist=False), lazy='dynamic')
-    reports = db.relationship('Report', backref=db.backref(
+    reports = db.relationship('report', backref=db.backref(
         'zone', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -121,30 +121,30 @@ class Zone(Base):
 
 
 class Pharmacy(Base):
-    __tablename__ = 'Pharmacy'
+    __tablename__ = 'pharmacy'
 
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     phone_number = Column(Integer, nullable=False)
     address = Column(String(200), nullable=False)
-    zone_id = Column(Integer, ForeignKey('Zone.id'), nullable=False)
+    zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
     support = Column(String(200))
     date_of_joining = Column(Date)
     histories_of_user_activity = db.relationship(
-        'History_of_user_activity', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
+        'history_of_user_activity', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
     orders = db.relationship('Order', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
-    acceptance_of_items = db.relationship('Acceptance_of_item', backref=db.backref(
+    acceptance_of_items = db.relationship('acceptance_of_item', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
-    availabilty_of_items = db.relationship('Availabilty_of_item', backref=db.backref(
+    availabilty_of_items = db.relationship('availabilty_of_item', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
     histories_Of_marketing = db.relationship(
-        'History_of_marketing', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
+        'history_of_marketing', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
     doctors = db.relationship('Doctor', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
-    histories_of_pharmacy = db.relationship('History_of_pharmacy', backref=db.backref(
+    histories_of_pharmacy = db.relationship('history_of_pharmacy', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
-    reports = db.relationship('Report', backref=db.backref(
+    reports = db.relationship('report', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -161,20 +161,20 @@ class Pharmacy(Base):
 
 
 class Item(Base):
-    __tablename__ = 'Item'
+    __tablename__ = 'item'
 
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
-    company_id = Column(Integer, ForeignKey('Company.id'), nullable=False)
+    company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
     expire_date = Column(Date, nullable=False)
     price = Column(Integer)
     acceptance_of_items = db.relationship(
-        'Acceptance_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
+        'acceptance_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
     availabilty_of_items = db.relationship(
-        'Availabilty_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
+        'availabilty_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
     item_orders = db.relationship('item_order', backref=db.backref(
         'item', uselist=False), lazy='dynamic')
-    reports = db.relationship('Report', backref=db.backref(
+    reports = db.relationship('report', backref=db.backref(
         'item', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -188,21 +188,21 @@ class Item(Base):
 
 
 class Report(Base):
-    __tablename__ = 'Report'
+    __tablename__ = 'report'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey('User.id'), nullable=False)
-    zone_id = Column(Integer, ForeignKey('Zone.id'), nullable=False)
-    doctor_id = Column(Integer, ForeignKey('Doctor.id'), nullable=False)
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
-    company_id = Column(Integer, ForeignKey('Company.id'), nullable=False)
-    item_id = Column(Integer, ForeignKey("Item.id"), nullable=False)
+    user_id = Column(ForeignKey('user.id'), nullable=False)
+    zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctor.id'), nullable=False)
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
+    company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
+    item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     acceptance_of_item_id = Column(Integer, ForeignKey(
-        "Acceptance_of_item.id"), nullable=False)
+        "acceptance_of_item.id"), nullable=False)
     availabilty_of_item_id = Column(Integer, ForeignKey(
-        "Availabilty_of_item.id"), nullable=False)
+        "availabilty_of_item.id"), nullable=False)
     history_of_pharmacy_id = Column(Integer, ForeignKey(
-        "History_of_pharmacy.id"), nullable=False)
+        "history_of_pharmacy.id"), nullable=False)
 
     def format(self):
         return {
@@ -217,7 +217,7 @@ class Report(Base):
             'availabilty_of_item_id': self.availabilty_of_item_id,
             'history_of_pharmacy_id': self.history_of_pharmacy_id
         }
-
+        
     def short(self):
         return {
             'id': self.id,
@@ -228,26 +228,25 @@ class Report(Base):
             'company_id': self.company_id,
             'item_id': self.item_id,
             'acceptance_of_item_id': self.acceptance_of_item_id,
-            'availabilty_of_item_id': self.availabilty_of_item_id,
             'history_of_pharmacy_id': self.history_of_pharmacy_id
         }
 
 
 class Order(Base):
-    __tablename__ = 'Order'
+    __tablename__ = 'order'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey('User.id'), nullable=False)
-    zone_id = Column(Integer, ForeignKey('Zone.id'), nullable=False)
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
-    doctor_id = Column(Integer, ForeignKey('Doctor.id'))
+    user_id = Column(ForeignKey('user.id'), nullable=False)
+    zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctor.id'))
     comment = Column(String(200))
     date_of_order = Column(Date, nullable=False)
     approved = Column(Boolean)
     histories_of_doctor = db.relationship(
-        'History_of_doctor', backref=db.backref('order', uselist=False), lazy='dynamic')
+        'history_of_doctor', backref=db.backref('order', uselist=False), lazy='dynamic')
     histories_of_pharmacy = db.relationship(
-        'History_of_pharmacy', backref=db.backref('order', uselist=False), lazy='dynamic')
+        'history_of_pharmacy', backref=db.backref('order', uselist=False), lazy='dynamic')
     item_orders = db.relationship('item_order', backref=db.backref(
         'order', uselist=False), lazy='dynamic')
 
@@ -267,8 +266,8 @@ class item_order(Base):
     __tablename__ = 'item_order'
 
     id = Column(Integer, primary_key=True)
-    order_id = Column(Integer, ForeignKey("Order.id"), nullable=False)
-    item_id = Column(Integer, ForeignKey("Item.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("order.id"), nullable=False)
+    item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     quantity = Column(Integer, default=1)
     price = Column(Integer, nullable=False)
 
@@ -283,15 +282,15 @@ class item_order(Base):
 
 
 class Acceptance_of_item(Base):
-    __tablename__ = 'Acceptance_of_item'
+    __tablename__ = 'acceptance_of_item'
 
     id = Column(Integer, primary_key=True)
-    item_id = Column(Integer, ForeignKey('Item.id'), nullable=False)
+    item_id = Column(Integer, ForeignKey('item.id'), nullable=False)
     acceptance = Column(String(200), nullable=False)
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
-    doctor_id = Column(Integer, ForeignKey('Doctor.id'), nullable=False)
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctor.id'), nullable=False)
     comment = Column(String(500))
-    reports = db.relationship('Report', backref=db.backref(
+    reports = db.relationship('report', backref=db.backref(
         'acceptance_of_item', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -306,15 +305,15 @@ class Acceptance_of_item(Base):
 
 
 class Availabilty_of_item(Base):
-    __tablename__ = 'Availabilty_of_item'
+    __tablename__ = 'availabilty_of_item'
 
     id = Column(Integer, primary_key=True)
-    item_id = Column(Integer, ForeignKey('Item.id'), nullable=False)
+    item_id = Column(Integer, ForeignKey('item.id'), nullable=False)
     available = Column(Boolean, nullable=False)
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
-    doctor_id = Column(Integer, ForeignKey('Doctor.id'))
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctor.id'))
     comment = Column(String(500))
-    reports = db.relationship('Report', backref=db.backref(
+    reports = db.relationship('report', backref=db.backref(
         'availabilty_of_item', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -329,14 +328,14 @@ class Availabilty_of_item(Base):
 
 
 class Company(Base):
-    __tablename__ = "Company"
+    __tablename__ = "company"
     id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String(200), nullable=False)
-    items = db.relationship('Item', backref=db.backref(
+    items = db.relationship('item', backref=db.backref(
         'company', uselist=False), lazy='dynamic')
-    histories_of_company = db.relationship('History_of_company', backref=db.backref(
+    histories_of_company = db.relationship('history_of_company', backref=db.backref(
         'company', uselist=False), lazy='dynamic')
-    reports = db.relationship('Report', backref=db.backref(
+    reports = db.relationship('report', backref=db.backref(
         'company', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -347,10 +346,10 @@ class Company(Base):
 
 
 class History_of_company(Base):
-    __tablename__ = "History_of_company"
+    __tablename__ = "history_of_company"
     id = Column(Integer, nullable=False, primary_key=True)
-    company_id = Column(Integer, ForeignKey('Company.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('User.id'), nullable=False)
+    company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     date = Column(Date)
 
     def format(self):
@@ -363,11 +362,11 @@ class History_of_company(Base):
 
 
 class History_of_marketing(Base):
-    __tablename__ = "History_of_marketing"
+    __tablename__ = "history_of_marketing"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('User.id'), nullable=False)
-    doctor_id = Column(Integer, ForeignKey('Doctor.id'))
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctor.id'))
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
     date = Column(Date)
 
     def format(self):
@@ -381,30 +380,29 @@ class History_of_marketing(Base):
 
 
 class Doctor(Base):
-    __tablename__ = "Doctor"
+    __tablename__ = "doctor"
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     phone = Column(Integer, nullable=True)
-    zone_id = Column(Integer, ForeignKey('Zone.id'))
+    zone_id = Column(Integer, ForeignKey('zone.id'))
     speciality = Column(String(200), nullable=False)
     d_class = Column(String(2), nullable=True)
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
     support = Column(String(200), nullable=False)
-    loyality = Column(String(200), nullable=False)
     date_of_joining = Column(Date)
     histories_of_user_activity = db.relationship(
-        'History_of_user_activity', backref=db.backref('doctor', uselist=False), lazy='dynamic')
-    orders = db.relationship('Order', backref=db.backref(
+        'history_of_user_activity', backref=db.backref('doctor', uselist=False), lazy='dynamic')
+    orders = db.relationship('order', backref=db.backref(
         'doctor', uselist=False), lazy='dynamic')
-    acceptance_of_items = db.relationship('Acceptance_of_item', backref=db.backref(
+    acceptance_of_items = db.relationship('acceptance_of_item', backref=db.backref(
         'doctor', uselist=False), lazy='dynamic')
     availabilty_of_items = db.relationship(
-        'Availabilty_of_item', backref=db.backref('doctor', uselist=False), lazy='dynamic')
+        'availabilty_of_item', backref=db.backref('doctor', uselist=False), lazy='dynamic')
     histories_of_marketing = db.relationship(
-        'History_of_marketing', backref=db.backref('doctor', uselist=False), lazy='dynamic')
-    histories_of_doctor = db.relationship('History_of_doctor', backref=db.backref(
+        'jistory_of_marketing', backref=db.backref('doctor', uselist=False), lazy='dynamic')
+    histories_of_doctor = db.relationship('history_of_doctor', backref=db.backref(
         'doctor', uselist=False), lazy='dynamic')
-    reports = db.relationship('Report', backref=db.backref(
+    reports = db.relationship('report', backref=db.backref(
         'doctor', uselist=False), lazy='dynamic')
 
     def format(self):
@@ -423,12 +421,12 @@ class Doctor(Base):
 
 
 class History_of_doctor(Base):
-    __tablename__ = 'History_of_doctor'
+    __tablename__ = 'history_of_doctor'
     id = Column(Integer, primary_key=True)
-    doctor_id = Column(Integer, ForeignKey('Doctor.id'), nullable=False)
+    doctor_id = Column(Integer, ForeignKey('doctor.id'), nullable=False)
     visit_id = Column(Integer, ForeignKey(
-        'History_of_user_activity.id'), nullable=False)
-    order_id = Column(Integer, ForeignKey('Order.id'), nullable=False)
+        'history_of_user_activity.id'), nullable=False)
+    order_id = Column(Integer, ForeignKey('order.id'), nullable=False)
 
     def format(self):
         return {
@@ -440,13 +438,13 @@ class History_of_doctor(Base):
 
 
 class History_of_pharmacy(Base):
-    __tablename__ = 'History_of_pharmacy'
+    __tablename__ = 'history_of_pharmacy'
     id = Column(Integer, primary_key=True)
-    pharmacy_id = Column(Integer, ForeignKey('Pharmacy.id'), nullable=False)
+    pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
     visit_id = Column(Integer, ForeignKey(
-        'History_of_user_activity.id'), nullable=False)
-    order_id = Column(Integer, ForeignKey('Order.id'), nullable=False)
-    reports = db.relationship('Report', backref=db.backref(
+        'history_of_user_activity.id'), nullable=False)
+    order_id = Column(Integer, ForeignKey('order.id'), nullable=False)
+    reports = db.relationship('report', backref=db.backref(
         'history_of_pharmacy', uselist=False), lazy='dynamic')
 
     def format(self):

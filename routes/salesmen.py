@@ -1,12 +1,14 @@
 from flask import jsonify, abort, Blueprint
 import datetime
-from models import User, Report
+from models import User, Report, History_of_pharmacy
+
 SalesmenRoutes = Blueprint('salesmen', __name__)
+UserRoute = Blueprint('users', __name__)
 
 
 @SalesmenRoutes.route("/reports", methods=["GET"])
 def get_reports():
-    query = Report.query.all()
+    query = History_of_pharmacy.query.join(Report).filter(History_of_pharmacy.id == Report.history_of_pharmacy_id).all()
     reports = [Report.short() for report in query]
     result = {
 
@@ -16,6 +18,15 @@ def get_reports():
     return jsonify(result), 200
 
 
+@UserRoute.route("/users", methods=["GET"])
+def get_users():
+    query = User.query.all()
+    users = [user.format() for user in query]
+    results = {
+        "success": True,
+        "Users": users
+    }
+    return jsonify(results), 200
 # @UsersRoutes.route("/users", methods=["POST"])
 # def add_users():
 #     try:
