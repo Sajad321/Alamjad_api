@@ -7,7 +7,7 @@ SalesmenRoutes = Blueprint('salesmen', __name__)
 @SalesmenRoutes.route("/reports", methods=["GET"])
 def get_reports():
     query = Report.query.all()
-    reports = [Report.format() for report in query]
+    reports = [Report.short() for report in query]
     result = {
 
         "success": True,

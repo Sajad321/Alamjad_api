@@ -1,6 +1,7 @@
-from flask import Flask
+from flask import Flask, jsonify
 import logging
 from models import setup_db
+from routes.auth import AuthError
 
 def create_app(test_config=None):
     app = Flask(__name__)
@@ -14,6 +15,9 @@ def create_app(test_config=None):
     from routes.doctors import DoctorsRoutes
     app.register_blueprint(DoctorsRoutes)
     
+    @app.errorhandler(AuthError)
+    def auth_error(e):
+        return jsonify(e.error), e.status_code
     return app
 
 
