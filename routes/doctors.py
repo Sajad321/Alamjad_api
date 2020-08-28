@@ -1,14 +1,14 @@
 from flask import jsonify, abort, Blueprint
 import datetime
-from models import Doctor
+from models import doctor
 
 DoctorsRoutes = Blueprint('doctors', __name__)
 
 
 @DoctorsRoutes.route("/doctors", methods=["GET"])
 def get_doctors():
-    query = Doctor.query.all()
-    doctors = [Doctor.format() for doctor in query]
+    query = doctor.query.all()
+    doctors = [doctor.format() for doctor in query]
     result = {
         "success": True,
         "doctors": doctors

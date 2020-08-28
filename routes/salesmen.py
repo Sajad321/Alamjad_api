@@ -1,15 +1,19 @@
 from flask import jsonify, abort, Blueprint
-import datetime
-from models import User, Report, History_of_pharmacy
+from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order
 
 SalesmenRoutes = Blueprint('salesmen', __name__)
-UserRoute = Blueprint('users', __name__)
 
 
 @SalesmenRoutes.route("/reports", methods=["GET"])
 def get_reports():
-    query = History_of_pharmacy.query.join(Report).filter(History_of_pharmacy.id == Report.history_of_pharmacy_id).all()
-    reports = [Report.short() for report in query]
+    query = report.query.join(user, user.id == report.user_id).join(history_of_pharmacy, history_of_pharmacy.id == report.history_of_pharmacy_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
+        pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).join(order, order.id == history_of_pharmacy.order_id).filter(user.id == 2).all()
+
+    reports = [r.short() for r in query]
+    for date in reports:
+        date['last_pharmacy_order_date'] = str(
+            date['last_pharmacy_order_date'])
+
     result = {
 
         "success": True,
@@ -17,43 +21,5 @@ def get_reports():
     }
     return jsonify(result), 200
 
-
-@UserRoute.route("/users", methods=["GET"])
-def get_users():
-    query = User.query.all()
-    users = [user.format() for user in query]
-    results = {
-        "success": True,
-        "Users": users
-    }
-    return jsonify(results), 200
-# @UsersRoutes.route("/users", methods=["POST"])
-# def add_users():
-#     try:
-
-#         new_user_data = json.loads(request.data)
-
-#         new_name = new_user_data['name']
-#         new_username = new_user_data['username']
-#         new_password = new_user_data['password']
-#         new_email = new_user_data['username']
-#         new_phone_number = new_user_data['password']
-#         role = 3
-#         date_of_joining = datetime.date
-
-#         new_user = User(
-#             name=new_name,
-#             username=new_username,
-
-#         )
-
-#         User.insert(new_user)
-
-#         user = [new_user.format()]
-#         results = {
-#             "success": True,
-#             "user": user
-#         }
-#         return jsonify(results), 200
 #     except BaseException:
 #         abort(422)

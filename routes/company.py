@@ -1,6 +1,6 @@
 from flask import jsonify, abort, Blueprint
 import datetime
-from models import Company, Item
+from models import company, item
 
 Companyroute = Blueprint('company', __name__)
 
@@ -9,7 +9,7 @@ Itemroute = Blueprint('items', __name__)
 
 @Companyroute.route('/company', methods=['GET'])
 def get_company():
-    query = Company.query.all()
+    query = company.query.all()
     companies = [co.format() for co in query]
     results = {
         "success": True,
@@ -21,7 +21,7 @@ def get_company():
 
 @Itemroute.route('/items', methods=['GET'])
 def get_items():
-    query = Item.query.all()
+    query = item.query.all()
     items = [item.format() for item in query]
     results = {
         "success": True,

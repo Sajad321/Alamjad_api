@@ -1,14 +1,14 @@
 from flask import jsonify, abort, Blueprint
 import datetime
-from models import Pharmacy
+from models import pharmacy
 
 PharmaciesRoutes = Blueprint('pharmacies', __name__)
 
 
 @PharmaciesRoutes.route("/pharmacies", methods=["GET"])
 def get_pharmacies():
-    query = Pharmacy.query.all()
-    pharmacies = [Pharmacy.format() for pharmacy in query]
+    query = pharmacy.query.all()
+    pharmacies = [pharmacy.format() for pharmacy in query]
     result = {
 
         "success": True,
