@@ -8,6 +8,7 @@ DEBUG = True
 ENV = 'development'
 # Connect to the database
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root@localhost:3306/MRSmart'
+SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root@localhost:3306/MRSmart?charset=utf8'
 
 # TODO IMPLEMENT DATABASE URL
+JSON_AS_ASCII = False

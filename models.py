@@ -1,6 +1,8 @@
 
 from sqlalchemy import Column, String, Integer, Date, ForeignKey, Boolean
 from flask_sqlalchemy import SQLAlchemy
+from datetime import date
+import json
 
 # database_name = "trivia"
 # database_path = "postgres://postgres:1@{}/{}".format(
@@ -40,7 +42,7 @@ class Base(db.Model):
         db.session.commit()
 
 
-class User(Base):
+class user(Base):
     __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True)
@@ -73,7 +75,7 @@ class User(Base):
         }
 
 
-class History_of_user_activity(Base):
+class history_of_user_activity(Base):
     __tablename__ = 'history_of_user_activity'
 
     id = Column(Integer, primary_key=True)
@@ -98,7 +100,7 @@ class History_of_user_activity(Base):
         }
 
 
-class Zone(Base):
+class zone(Base):
     __tablename__ = 'zone'
     id = Column(Integer, primary_key=True)
     zone = Column(String(100), nullable=False)
@@ -120,7 +122,7 @@ class Zone(Base):
         }
 
 
-class Pharmacy(Base):
+class pharmacy(Base):
     __tablename__ = 'pharmacy'
 
     id = Column(Integer, primary_key=True)
@@ -132,7 +134,7 @@ class Pharmacy(Base):
     date_of_joining = Column(Date)
     histories_of_user_activity = db.relationship(
         'history_of_user_activity', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
-    orders = db.relationship('Order', backref=db.backref(
+    orders = db.relationship('order', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
     acceptance_of_items = db.relationship('acceptance_of_item', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
@@ -140,7 +142,7 @@ class Pharmacy(Base):
         'pharmacy', uselist=False), lazy='dynamic')
     histories_Of_marketing = db.relationship(
         'history_of_marketing', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
-    doctors = db.relationship('Doctor', backref=db.backref(
+    doctors = db.relationship('doctor', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
     histories_of_pharmacy = db.relationship('history_of_pharmacy', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
@@ -160,7 +162,7 @@ class Pharmacy(Base):
         }
 
 
-class Item(Base):
+class item(Base):
     __tablename__ = 'item'
 
     id = Column(Integer, primary_key=True)
@@ -187,7 +189,7 @@ class Item(Base):
         }
 
 
-class Report(Base):
+class report(Base):
     __tablename__ = 'report'
 
     id = Column(Integer, primary_key=True)
@@ -217,22 +219,21 @@ class Report(Base):
             'availabilty_of_item_id': self.availabilty_of_item_id,
             'history_of_pharmacy_id': self.history_of_pharmacy_id
         }
-        
+
     def short(self):
         return {
             'id': self.id,
-            'user_id': self.user_id,
-            'zone_id': self.zone_id,
-            'doctor_id': self.doctor_id,
-            'pharmacy_id': self.pharmacy_id,
-            'company_id': self.company_id,
-            'item_id': self.item_id,
-            'acceptance_of_item_id': self.acceptance_of_item_id,
-            'history_of_pharmacy_id': self.history_of_pharmacy_id
+            'zone': self.zone.zone,
+            'doctor': self.doctor.name,
+            'pharmacy': self.pharmacy.name,
+            'company': self.company.name,
+            'item': self.item.name,
+            'acceptance_of_item': self.acceptance_of_item.comment,
+            'last_pharmacy_order_date': self.history_of_pharmacy.order.date_of_order,
         }
 
 
-class Order(Base):
+class order(Base):
     __tablename__ = 'order'
 
     id = Column(Integer, primary_key=True)
@@ -281,7 +282,7 @@ class item_order(Base):
         }
 
 
-class Acceptance_of_item(Base):
+class acceptance_of_item(Base):
     __tablename__ = 'acceptance_of_item'
 
     id = Column(Integer, primary_key=True)
@@ -304,7 +305,7 @@ class Acceptance_of_item(Base):
         }
 
 
-class Availabilty_of_item(Base):
+class availabilty_of_item(Base):
     __tablename__ = 'availabilty_of_item'
 
     id = Column(Integer, primary_key=True)
@@ -327,7 +328,7 @@ class Availabilty_of_item(Base):
         }
 
 
-class Company(Base):
+class company(Base):
     __tablename__ = "company"
     id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String(200), nullable=False)
@@ -345,7 +346,7 @@ class Company(Base):
         }
 
 
-class History_of_company(Base):
+class history_of_company(Base):
     __tablename__ = "history_of_company"
     id = Column(Integer, nullable=False, primary_key=True)
     company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
@@ -361,7 +362,7 @@ class History_of_company(Base):
         }
 
 
-class History_of_marketing(Base):
+class history_of_marketing(Base):
     __tablename__ = "history_of_marketing"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
@@ -379,7 +380,7 @@ class History_of_marketing(Base):
         }
 
 
-class Doctor(Base):
+class doctor(Base):
     __tablename__ = "doctor"
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
@@ -399,7 +400,7 @@ class Doctor(Base):
     availabilty_of_items = db.relationship(
         'availabilty_of_item', backref=db.backref('doctor', uselist=False), lazy='dynamic')
     histories_of_marketing = db.relationship(
-        'jistory_of_marketing', backref=db.backref('doctor', uselist=False), lazy='dynamic')
+        'history_of_marketing', backref=db.backref('doctor', uselist=False), lazy='dynamic')
     histories_of_doctor = db.relationship('history_of_doctor', backref=db.backref(
         'doctor', uselist=False), lazy='dynamic')
     reports = db.relationship('report', backref=db.backref(
@@ -420,7 +421,7 @@ class Doctor(Base):
         }
 
 
-class History_of_doctor(Base):
+class history_of_doctor(Base):
     __tablename__ = 'history_of_doctor'
     id = Column(Integer, primary_key=True)
     doctor_id = Column(Integer, ForeignKey('doctor.id'), nullable=False)
@@ -437,7 +438,7 @@ class History_of_doctor(Base):
         }
 
 
-class History_of_pharmacy(Base):
+class history_of_pharmacy(Base):
     __tablename__ = 'history_of_pharmacy'
     id = Column(Integer, primary_key=True)
     pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)

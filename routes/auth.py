@@ -5,9 +5,9 @@ from jose import jwt
 from urllib.request import urlopen
 
 
-AUTH0_DOMAIN = 'alamjad.auth0.com'
+AUTH0_DOMAIN = 'alamjadtest.us.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = 'Alamjad'
+API_AUDIENCE = 'Amjad'
 
 # AuthError Exception
 '''
@@ -136,7 +136,7 @@ def verify_decode_jwt(token):
                 token,
                 rsa_key,
                 algorithms=ALGORITHMS,
-                # audience=API_AUDIENCE,
+                audience=API_AUDIENCE,
                 issuer='https://' + AUTH0_DOMAIN + '/'
             )
 
