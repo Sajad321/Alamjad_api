@@ -21,6 +21,6 @@ def after_request(response):
 @UserRoutes.route("/new_user", methods=["POST"])
 @requires_auth("Send:names")
 def check_user(token):
-    print(token)
-    print(json.loads(request.data))
+    # print(token)
+    # print(json.loads(request.data))
     return "1"
