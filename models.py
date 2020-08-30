@@ -220,6 +220,8 @@ class report(Base):
         "acceptance_of_item.id"), nullable=False)
     availabilty_of_item_id = Column(Integer, ForeignKey(
         "availabilty_of_item.id"), nullable=False)
+    notifications = db.relationship('notification', backref=db.backref(
+        'report', uselist=False), lazy='dynamic')
 
     def format(self):
         return {
@@ -279,9 +281,11 @@ class order(Base):
     zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
     pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
     doctor_id = Column(Integer, ForeignKey('doctor.id'))
+    company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
     comment = Column(String(200))
     date_of_order = Column(Date, nullable=False)
-    approved = Column(Boolean)
+    approved = Column(Boolean, default=False)
+    price = Column(Integer, nullable=False)
     histories_of_doctor = db.relationship(
         'history_of_doctor', backref=db.backref('order', uselist=False), lazy='dynamic')
     histories_of_pharmacy = db.relationship(
@@ -298,6 +302,20 @@ class order(Base):
             'doctor_id': self.doctor_id,
             'comment': self.comment,
             'date_of_order': self.date_of_order,
+        }
+
+    def detail(self):
+        return {
+            'id': self.id,
+            'approval': self.approved,
+            'user': self.user.name,
+            'zone': self.zone.zone,
+            'doctor': self.doctor.name,
+            'pharmacy': self.pharmacy.name,
+            'company': self.company.name,
+            'comment': self.comment,
+            'price': self.price,
+            'date_of_order': self.date_of_order
         }
 
 
@@ -318,6 +336,18 @@ class item_order(Base):
             'order_id': self.order_id,
             'item_id': self.item_id,
             'quantity': self.quantity,
+            'price': self.price
+        }
+
+    def detail(self):
+        return {
+            'id': self.id,
+            'order_id': self.order_id,
+            'item_id': self.item_id,
+            'item_name': self.item.name,
+            'quantity': self.quantity,
+            'bonus': self.bonus,
+            'gift': self.gift,
             'price': self.price
         }
 
@@ -373,6 +403,8 @@ class company(Base):
     items = db.relationship('item', backref=db.backref(
         'company', uselist=False), lazy='dynamic')
     histories_of_company = db.relationship('history_of_company', backref=db.backref(
+        'company', uselist=False), lazy='dynamic')
+    orders = db.relationship('order', backref=db.backref(
         'company', uselist=False), lazy='dynamic')
     reports = db.relationship('report', backref=db.backref(
         'company', uselist=False), lazy='dynamic')
@@ -496,4 +528,18 @@ class history_of_pharmacy(Base):
     def format(self):
         return {
             'last_pharmacy_order_date': self.order.date_of_order
+        }
+
+
+class notification(Base):
+    __tablename__ = 'notification'
+    id = Column(Integer, primary_key=True)
+    report_id = Column(Integer, ForeignKey('report.id'))
+    seen = Column(Boolean, default=False)
+
+    def format(self):
+        return {
+            'id': self.id,
+            'report': self.report.user.name,
+            'seen': self.seen
         }

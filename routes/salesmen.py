@@ -1,6 +1,6 @@
 from flask import jsonify, abort, Blueprint, request
 import json
-from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availabilty_of_item
+from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availabilty_of_item, notification
 
 SalesmenRoutes = Blueprint('salesmen', __name__)
 
@@ -55,7 +55,6 @@ def get_reports_form():
 @SalesmenRoutes.route("/reports", methods=["POST"])
 def post_reports_form():
     data = json.loads(request.data)
-    print(data)
     try:
         history = data['history']
         [provider, user_id] = data['user_id'].split('|')
@@ -96,7 +95,10 @@ def post_reports_form():
             availabilty_of_item_id=id_availability,
         )
 
-        report.insert(new_report)
+        id_report = report.insert(new_report)
+        new_notification = notification(report_id=id_report)
+
+        notification.insert(new_notification)
 
         return jsonify({
             'success': True,
@@ -125,7 +127,7 @@ def edit_report_form(report_id):
 
 
 @SalesmenRoutes.route("/reports/<int:report_id>", methods=["PATCH"])
-def put_report_form(report_id):
+def patch_report_form(report_id):
     data = json.loads(request.data)
     print(data)
     acceptance_of_item_data = acceptance_of_item.query.get(
