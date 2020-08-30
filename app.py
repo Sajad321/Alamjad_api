@@ -19,7 +19,7 @@ def create_app(test_config=None):
         )
         response.headers.add(
             'Access-Control-Allow-Methods',
-            'GET, PUT, POST, DELETE, OPTIONS'
+            'GET, PUT, POST, DELETE, PATCH, OPTIONS'
         )
         return response
 
@@ -29,13 +29,8 @@ def create_app(test_config=None):
     app.register_blueprint(SalesmenRoutes)
     from routes.users import UserRoutes
     app.register_blueprint(UserRoutes)
-    from routes.pharmacies import PharmaciesRoutes
-    app.register_blueprint(PharmaciesRoutes)
-    from routes.doctors import DoctorsRoutes
-    app.register_blueprint(DoctorsRoutes)
-    from routes.company import Companyroute, Itemroute
-    app.register_blueprint(Companyroute)
-    app.register_blueprint(Itemroute)
+    from routes.admin import AdminRoutes
+    app.register_blueprint(AdminRoutes)
 
     @app.errorhandler(AuthError)
     def auth_error(e):
