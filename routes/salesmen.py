@@ -4,6 +4,8 @@ from models import user, report, history_of_pharmacy, history_of_user_activity, 
 
 SalesmenRoutes = Blueprint('salesmen', __name__)
 
+# You have wrong Table name (availabilty_of_item) supposed to be (availability_of_item) #
+
 
 @SalesmenRoutes.route("/reports", methods=["GET"])
 def get_reports():
@@ -104,26 +106,75 @@ def post_reports_form():
         abort(500)
 
 
-# @SalesmenRoutes.route("/reports-form/<int:report_id>", methods=["GET"])
-# def get_reports_form(report_id):
-#     zones_query = zone.query.all()
-#     zones = [z.format() for z in zones_query]
-#     pharmacies_query = pharmacy.query.all()
-#     pharmacies = [p.format() for p in pharmacies_query]
-#     doctors_query = doctor.query.all()
-#     docotrs = [d.short() for d in doctors_query]
-#     companies_query = company.query.all()
-#     companies = [c.format() for c in companies_query]
-#     items_query = item.query.all()
-#     items = [i.short() for i in items_query]
+@SalesmenRoutes.route("/reports-form/<int:report_id>", methods=["GET"])
+def edit_report_form(report_id):
+    query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
+        pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).filter(user.id == 2, report.id == report_id).all()
 
-#     results = {"zones": zones,
-#                "pharmacies": pharmacies,
-#                "doctors": docotrs,
-#                "companies": companies,
-#                "items": items,
-#                "success": True}
-#     return jsonify(results), 200
+    report_editor = [r.edit_report() for r in query]
+    for date in report_editor:
+        date['history'] = str(
+            date['history'])
+
+    result = {
+
+        "success": True,
+        "report": report_editor
+    }
+    return jsonify(result), 200
+
+
+@SalesmenRoutes.route("/reports/<int:report_id>", methods=["PATCH"])
+def put_report_form(report_id):
+    data = json.loads(request.data)
+    print(data)
+    acceptance_of_item_data = acceptance_of_item.query.get(
+        data['acceptance_of_item'])
+    availability_of_item_data = availabilty_of_item.query.get(
+        data['availability_of_item'])
+    report_data = report.query.get(report_id)
+    try:
+        history = data['history']
+        # [provider, user_id] = data['user_id'].split('|')
+        zone_id = data['zone_id']
+        doctor_id = data['doctor_id']
+        pharmacy_id = data['pharmacy_id']
+        company_id = data['company_id']
+        item_id = data['item_id']
+        acceptance = data['acceptance']
+        acceptance_comment = data['acceptance_comment']
+        available = data['available']
+
+        acceptance_of_item_data.item_id = item_id
+        acceptance_of_item_data.acceptance = acceptance
+        acceptance_of_item_data.doctor_id = doctor_id
+        acceptance_of_item_data.pharmacy_id = pharmacy_id
+        acceptance_of_item_data.comment = acceptance_comment
+
+        acceptance_of_item.update(acceptance_of_item_data)
+
+        availability_of_item_data.item_id = item_id
+        availability_of_item_data.available = available
+        availability_of_item_data.doctor_id = doctor_id
+        availability_of_item_data.pharmacy_id = pharmacy_id
+
+        availabilty_of_item.update(availability_of_item_data)
+
+        report_data.date = history
+        report_data.zone_id = zone_id
+        report_data.doctor_id = doctor_id
+        report_data.pharmacy_id = pharmacy_id
+        report_data.company_id = company_id
+        report_data.item_id = item_id
+
+        report.update(report_data)
+
+        return jsonify({
+            'success': True,
+        }), 201
+
+    except:
+        abort(500)
 
 #     except BaseException:
 #         abort(422)

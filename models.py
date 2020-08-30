@@ -248,6 +248,28 @@ class report(Base):
             'acceptance_of_item': self.acceptance_of_item.comment,
         }
 
+    def edit_report(self):
+        return {
+            'id': self.id,
+            'history': self.date,
+            'user_id': self.user_id,
+            'zone': {"id": self.zone.id, "zone": self.zone.zone},
+            'zone_id': self.zone_id,
+            'doctor': {"id": self.doctor.id, "name": self.doctor.name},
+            'doctor_id': self.doctor_id,
+            'pharmacy': {"id": self.pharmacy.id, "name": self.pharmacy.name},
+            'pharmacy_id': self.pharmacy_id,
+            'company': {"id": self.company.id, "name": self.company.name},
+            'company_id': self.company_id,
+            'item': {"id": self.item.id, "name": self.item.name},
+            'item_id': self.item_id,
+            'acceptance_of_item': self.acceptance_of_item.id,
+            'acceptance': self.acceptance_of_item.acceptance,
+            'acceptance_comment': self.acceptance_of_item.comment,
+            'availability_of_item': self.availabilty_of_item.id,
+            'available': self.availabilty_of_item.available
+        }
+
 
 class order(Base):
     __tablename__ = 'order'
