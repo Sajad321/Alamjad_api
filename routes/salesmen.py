@@ -1,10 +1,21 @@
-from flask import jsonify, abort, Blueprint, request
+from flask import jsonify, abort, Blueprint, request, render_template
 import json
 from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availabilty_of_item, notification
-
+from flask_mail import Mail, Message
+from app import app
 SalesmenRoutes = Blueprint('salesmen', __name__)
 
 # You have wrong Table name (availabilty_of_item) supposed to be (availability_of_item) #
+app.config.update(
+    # EMAIL SETTINGS
+    MAIL_SERVER='mail.alamjadsb.com',
+    MAIL_PORT=465,
+    MAIL_USE_SSL=True,
+    MAIL_USE_TLS=False,
+    MAIL_USERNAME='_mainaccount@alamjadsb.com',
+    MAIL_PASSWORD='1Sy9Lp9c7b'
+)
+mail = Mail(app)
 
 
 @SalesmenRoutes.route("/reports", methods=["GET"])
@@ -178,5 +189,41 @@ def patch_report_form(report_id):
     except:
         abort(500)
 
+
+SalesmenRoutes.route('/order', methods=['POST'])
+def post_order():
+    data = json.loads(request.get)
+    fdata = data['orders']
+    for dota in fdata:
+        if dota == 'comment':
+            com = fdata[dota]
+        elif dota == 'company':
+            co = fdata[dota]
+        elif dota == 'date_of_order':
+            dat = fdata[dota]
+        elif dota == 'pharmacy':
+            ph = fdata[dota]
+        elif dota == 'user':
+            user = fdata[dota]
+        elif dota == 'zone':
+            zon = fdata[dota]
+        elif dota == 'items':
+            items = fdata[dota]
+            for it in items:
+                for dic in it:
+                  if dic == 'item_name':
+                    itname = it[dic]
+                  elif dic == 'quantity':
+                      qun = it[dic]
+                  elif dic == 'bonus':
+                      bon = it[dic] + '%'
+                  elif dic == 'gift':
+                      gif = "يوجد ديل " + com
+    items = (itname, qun , bon)
+    msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
+              recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
+    msg.html = render_template('msg.html', user=user, zone=zon, history=dat, pharmacy=ph, co=co, items=items,
+                           gift=gif)
+    mail.send(msg)
 #     except BaseException:
 #         abort(422)

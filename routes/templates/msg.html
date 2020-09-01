@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>طلبية مكتب الامجاد</title>
+</head>
+<body>
+<div style="  padding: 60px;
+  text-align: center;
+  background: #00BFFF;
+  color: white;
+  font-size: 30px;">
+  <img src="https://alamjadsb.com/amjad.png" style="align-content: center"><br>
+  <b>الاعلام الدوائي - مكتب الامجاد العلمي</b>
+
+<ul>
+    <li><b> اسم المندوب : {{ user }}</b></li>
+     <li><b>المنطقة : {{ zone }}</b></li>
+     <li><b>التاريخ : {{ history }}</b></li>
+     <li><b>الصيدلية : {{ pharmacy }}</b></li>
+     <li><b> الشركة : {{ co }}</b></li>
+     {% for item, qun, bonus in items %}
+         <li><b>المادة : {{ item }} - {{ qun }} - {{ bonus }} </b></li>
+     {% endfor %}
+      <li><b>هدية : {{ gift }} </b></li>
+</ul>
+</div>
+</body>
+</html>
