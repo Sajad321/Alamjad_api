@@ -51,8 +51,8 @@ class user(Base):
     username = Column(String(200), unique=True)
     email = Column(String(200), nullable=False, unique=True)
     phone_number = Column(Integer, nullable=False)
-    password = Column(String(200))
     date_of_joining = Column(Date)
+    zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
     role = Column(Integer, nullable=False)
     histories_of_user_activity = db.relationship(
         'history_of_user_activity', backref=db.backref('user', uselist=False), lazy='dynamic')
@@ -65,14 +65,15 @@ class user(Base):
     reports = db.relationship('report', backref=db.backref(
         'user', uselist=False), lazy='dynamic')
 
-    def format(self):
+    def detail(self):
         return {
             'id': self.id,
             'name': self.name,
             'username': self.username,
+            'zone': self.zone.zone,
             'email': self.email,
+            'phone_number': self.phone_number,
             'date_of_joining': self.date_of_joining,
-            'role': self.role
         }
 
 
@@ -105,6 +106,8 @@ class zone(Base):
     __tablename__ = 'zone'
     id = Column(Integer, primary_key=True)
     zone = Column(String(100), nullable=False)
+    users = db.relationship('user', backref=db.backref(
+        'zone', uselist=False), lazy='dynamic')
     histories_of_user_activity = db.relationship(
         'history_of_user_activity', backref=db.backref('zone', uselist=False), lazy='dynamic')
     pharmacies = db.relationship('pharmacy', backref=db.backref(
@@ -150,12 +153,13 @@ class pharmacy(Base):
     reports = db.relationship('report', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
 
-    def format(self):
+    def detail(self):
         return {
             'id': self.id,
             'name': self.name,
             'phone_number': self.phone_number,
             'address': self.address,
+            'zone': self.zone.zone,
             'zone_id': self.zone_id,
             'support': self.support,
             'date_of_joining': self.date_of_joining
@@ -165,9 +169,7 @@ class pharmacy(Base):
         return {
             'id': self.id,
             'name': self.name,
-
             'zone_id': self.zone_id,
-
         }
 
 
@@ -188,11 +190,12 @@ class item(Base):
     reports = db.relationship('report', backref=db.backref(
         'item', uselist=False), lazy='dynamic')
 
-    def format(self):
+    def detail(self):
         return {
             'id': self.id,
             'name': self.name,
-            'company_id': self.company_id,
+            "company_id": self.company_id,
+            'company': self.company.name,
             'expire_date': self.expire_date,
             'price': self.price,
         }
@@ -250,6 +253,20 @@ class report(Base):
             'acceptance_of_item': self.acceptance_of_item.comment,
         }
 
+    def detail(self):
+        return {
+            'id': self.id,
+            'history': self.date,
+            'user': self.user.name,
+            'zone': self.zone.zone,
+            'doctor': self.doctor.name,
+            'pharmacy': self.pharmacy.name,
+            'pharmacy_id': self.pharmacy_id,
+            'company': self.company.name,
+            'item': self.item.name,
+            'acceptance_of_item': self.acceptance_of_item.comment,
+        }
+
     def edit_report(self):
         return {
             'id': self.id,
@@ -284,7 +301,7 @@ class order(Base):
     company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
     comment = Column(String(200))
     date_of_order = Column(Date, nullable=False)
-    approved = Column(Boolean, default=False)
+    approved = Column(Integer, default=0)
     price = Column(Integer, nullable=False)
     histories_of_doctor = db.relationship(
         'history_of_doctor', backref=db.backref('order', uselist=False), lazy='dynamic')
@@ -398,7 +415,7 @@ class availabilty_of_item(Base):
 
 class company(Base):
     __tablename__ = "company"
-    id = Column(Integer, nullable=False, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     items = db.relationship('item', backref=db.backref(
         'company', uselist=False), lazy='dynamic')
@@ -454,10 +471,11 @@ class doctor(Base):
     __tablename__ = "doctor"
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
-    phone = Column(Integer, nullable=True)
+    phone = Column(String(12))
+    email = Column(String(100))
     zone_id = Column(Integer, ForeignKey('zone.id'))
     speciality = Column(String(200), nullable=False)
-    d_class = Column(String(2), nullable=True)
+    d_class = Column(String(2))
     pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
     support = Column(String(200), nullable=False)
     date_of_joining = Column(Date)
@@ -476,17 +494,19 @@ class doctor(Base):
     reports = db.relationship('report', backref=db.backref(
         'doctor', uselist=False), lazy='dynamic')
 
-    def format(self):
+    def detail(self):
         return {
             'id': self.id,
             'name': self.name,
             'phone': self.phone,
+            'email': self.email,
             'pharmacy_id': self.pharmacy_id,
+            'pharmacy': self.pharmacy.name,
             'zone_id': self.zone_id,
+            'zone': self.zone.zone,
             'speciality': self.speciality,
             'd_class': self.d_class,
             'support': self.support,
-            'loyality': self.loyality,
             'date_of_joining': self.date_of_joining,
         }
 
