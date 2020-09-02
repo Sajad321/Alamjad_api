@@ -1,21 +1,7 @@
-from flask import jsonify, abort, Blueprint, request, render_template
+from flask import jsonify, abort, Blueprint, request
 import json
-from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availabilty_of_item, notification
-from flask_mail import Mail, Message
-from app import app
+from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availability_of_item, notification
 SalesmenRoutes = Blueprint('salesmen', __name__)
-
-# You have wrong Table name (availabilty_of_item) supposed to be (availability_of_item) #
-app.config.update(
-    # EMAIL SETTINGS
-    MAIL_SERVER='mail.alamjadsb.com',
-    MAIL_PORT=465,
-    MAIL_USE_SSL=True,
-    MAIL_USE_TLS=False,
-    MAIL_USERNAME='_mainaccount@alamjadsb.com',
-    MAIL_PASSWORD='1Sy9Lp9c7b'
-)
-mail = Mail(app)
 
 
 @SalesmenRoutes.route("/reports", methods=["GET"])
@@ -46,7 +32,7 @@ def get_reports_form():
     zones_query = zone.query.all()
     zones = [z.format() for z in zones_query]
     pharmacies_query = pharmacy.query.all()
-    pharmacies = [p.format() for p in pharmacies_query]
+    pharmacies = [p.short() for p in pharmacies_query]
     doctors_query = doctor.query.all()
     docotrs = [d.short() for d in doctors_query]
     companies_query = company.query.all()
@@ -86,24 +72,24 @@ def post_reports_form():
         )
         id_acceptance = acceptance_of_item.insert(new_acceptance)
 
-        new_availability = availabilty_of_item(
+        new_availability = availability_of_item(
             item_id=item_id,
             available=available,
             doctor_id=doctor_id,
             pharmacy_id=pharmacy_id,
         )
-        id_availability = availabilty_of_item.insert(new_availability)
+        id_availability = availability_of_item.insert(new_availability)
 
         new_report = report(
             date=history,
-            user_id='2',  # Change when use auth0
+            user_id=user_id,  # Change when use auth0
             zone_id=zone_id,
             doctor_id=doctor_id,
             pharmacy_id=pharmacy_id,
             company_id=company_id,
             item_id=item_id,
             acceptance_of_item_id=id_acceptance,
-            availabilty_of_item_id=id_availability,
+            availability_of_item_id=id_availability,
         )
 
         id_report = report.insert(new_report)
@@ -130,7 +116,6 @@ def edit_report_form(report_id):
             date['history'])
 
     result = {
-
         "success": True,
         "report": report_editor
     }
@@ -140,15 +125,13 @@ def edit_report_form(report_id):
 @SalesmenRoutes.route("/reports/<int:report_id>", methods=["PATCH"])
 def patch_report_form(report_id):
     data = json.loads(request.data)
-    print(data)
     acceptance_of_item_data = acceptance_of_item.query.get(
         data['acceptance_of_item'])
-    availability_of_item_data = availabilty_of_item.query.get(
+    availability_of_item_data = availability_of_item.query.get(
         data['availability_of_item'])
     report_data = report.query.get(report_id)
     try:
         history = data['history']
-        # [provider, user_id] = data['user_id'].split('|')
         zone_id = data['zone_id']
         doctor_id = data['doctor_id']
         pharmacy_id = data['pharmacy_id']
@@ -171,7 +154,7 @@ def patch_report_form(report_id):
         availability_of_item_data.doctor_id = doctor_id
         availability_of_item_data.pharmacy_id = pharmacy_id
 
-        availabilty_of_item.update(availability_of_item_data)
+        availability_of_item.update(availability_of_item_data)
 
         report_data.date = history
         report_data.zone_id = zone_id
@@ -190,40 +173,5 @@ def patch_report_form(report_id):
         abort(500)
 
 
-SalesmenRoutes.route('/order', methods=['POST'])
-def post_order():
-    data = json.loads(request.get)
-    fdata = data['orders']
-    for dota in fdata:
-        if dota == 'comment':
-            com = fdata[dota]
-        elif dota == 'company':
-            co = fdata[dota]
-        elif dota == 'date_of_order':
-            dat = fdata[dota]
-        elif dota == 'pharmacy':
-            ph = fdata[dota]
-        elif dota == 'user':
-            user = fdata[dota]
-        elif dota == 'zone':
-            zon = fdata[dota]
-        elif dota == 'items':
-            items = fdata[dota]
-            for it in items:
-                for dic in it:
-                  if dic == 'item_name':
-                    itname = it[dic]
-                  elif dic == 'quantity':
-                      qun = it[dic]
-                  elif dic == 'bonus':
-                      bon = it[dic] + '%'
-                  elif dic == 'gift':
-                      gif = "يوجد ديل " + com
-    items = (itname, qun , bon)
-    msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
-              recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
-    msg.html = render_template('msg.html', user=user, zone=zon, history=dat, pharmacy=ph, co=co, items=items,
-                           gift=gif)
-    mail.send(msg)
 #     except BaseException:
 #         abort(422)
