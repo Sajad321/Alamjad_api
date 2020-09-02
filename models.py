@@ -50,10 +50,10 @@ class user(Base):
     name = Column(String(200), nullable=False)
     username = Column(String(200), unique=True)
     email = Column(String(200), nullable=False, unique=True)
-    phone_number = Column(Integer, nullable=False)
+    phone_number = Column(Integer)
     date_of_joining = Column(Date)
-    zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
-    role = Column(Integer, nullable=False)
+    zone_id = Column(Integer, ForeignKey('zone.id'))
+    role = Column(Integer)
     histories_of_user_activity = db.relationship(
         'history_of_user_activity', backref=db.backref('user', uselist=False), lazy='dynamic')
     orders = db.relationship('order', backref=db.backref(
@@ -75,6 +75,9 @@ class user(Base):
             'phone_number': self.phone_number,
             'date_of_joining': self.date_of_joining,
         }
+
+    def take_role(self):
+        return self.role
 
 
 class history_of_user_activity(Base):
@@ -142,7 +145,7 @@ class pharmacy(Base):
         'pharmacy', uselist=False), lazy='dynamic')
     acceptance_of_items = db.relationship('acceptance_of_item', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
-    availabilty_of_items = db.relationship('availabilty_of_item', backref=db.backref(
+    availability_of_items = db.relationship('availability_of_item', backref=db.backref(
         'pharmacy', uselist=False), lazy='dynamic')
     histories_Of_marketing = db.relationship(
         'history_of_marketing', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
@@ -183,8 +186,8 @@ class item(Base):
     price = Column(Integer)
     acceptance_of_items = db.relationship(
         'acceptance_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
-    availabilty_of_items = db.relationship(
-        'availabilty_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
+    availability_of_items = db.relationship(
+        'availability_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
     item_orders = db.relationship('item_order', backref=db.backref(
         'item', uselist=False), lazy='dynamic')
     reports = db.relationship('report', backref=db.backref(
@@ -205,6 +208,7 @@ class item(Base):
             'id': self.id,
             'name': self.name,
             'company_id': self.company_id,
+            'price': self.price,
         }
 
 
@@ -222,7 +226,7 @@ class report(Base):
     acceptance_of_item_id = Column(Integer, ForeignKey(
         "acceptance_of_item.id"), nullable=False)
     availabilty_of_item_id = Column(Integer, ForeignKey(
-        "availabilty_of_item.id"), nullable=False)
+        "availability_of_item.id"), nullable=False)
     notifications = db.relationship('notification', backref=db.backref(
         'report', uselist=False), lazy='dynamic')
 
@@ -285,8 +289,8 @@ class report(Base):
             'acceptance_of_item': self.acceptance_of_item.id,
             'acceptance': self.acceptance_of_item.acceptance,
             'acceptance_comment': self.acceptance_of_item.comment,
-            'availability_of_item': self.availabilty_of_item.id,
-            'available': self.availabilty_of_item.available
+            'availability_of_item': self.availability_of_item.id,
+            'available': self.availability_of_item.available
         }
 
 
@@ -345,7 +349,6 @@ class item_order(Base):
     quantity = Column(Integer, default=1)
     bonus = Column(Integer)
     gift = Column(Boolean, default=False)
-    price = Column(Integer, nullable=False)
 
     def format(self):
         return {
@@ -353,7 +356,6 @@ class item_order(Base):
             'order_id': self.order_id,
             'item_id': self.item_id,
             'quantity': self.quantity,
-            'price': self.price
         }
 
     def detail(self):
@@ -392,8 +394,8 @@ class acceptance_of_item(Base):
         }
 
 
-class availabilty_of_item(Base):
-    __tablename__ = 'availabilty_of_item'
+class availability_of_item(Base):
+    __tablename__ = 'availability_of_item'
 
     id = Column(Integer, primary_key=True)
     item_id = Column(Integer, ForeignKey('item.id'), nullable=False)
@@ -401,7 +403,7 @@ class availabilty_of_item(Base):
     pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
     doctor_id = Column(Integer, ForeignKey('doctor.id'))
     reports = db.relationship('report', backref=db.backref(
-        'availabilty_of_item', uselist=False), lazy='dynamic')
+        'availability_of_item', uselist=False), lazy='dynamic')
 
     def format(self):
         return {
@@ -437,7 +439,7 @@ class history_of_company(Base):
     __tablename__ = "history_of_company"
     id = Column(Integer, nullable=False, primary_key=True)
     company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user_id = Column(ForeignKey('user.id'), nullable=False)
     date = Column(Date)
 
     def format(self):
@@ -452,7 +454,7 @@ class history_of_company(Base):
 class history_of_marketing(Base):
     __tablename__ = "history_of_marketing"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user_id = Column(ForeignKey('user.id'), nullable=False)
     doctor_id = Column(Integer, ForeignKey('doctor.id'))
     pharmacy_id = Column(Integer, ForeignKey('pharmacy.id'), nullable=False)
     date = Column(Date)
@@ -485,8 +487,8 @@ class doctor(Base):
         'doctor', uselist=False), lazy='dynamic')
     acceptance_of_items = db.relationship('acceptance_of_item', backref=db.backref(
         'doctor', uselist=False), lazy='dynamic')
-    availabilty_of_items = db.relationship(
-        'availabilty_of_item', backref=db.backref('doctor', uselist=False), lazy='dynamic')
+    availability_of_items = db.relationship(
+        'availability_of_item', backref=db.backref('doctor', uselist=False), lazy='dynamic')
     histories_of_marketing = db.relationship(
         'history_of_marketing', backref=db.backref('doctor', uselist=False), lazy='dynamic')
     histories_of_doctor = db.relationship('history_of_doctor', backref=db.backref(

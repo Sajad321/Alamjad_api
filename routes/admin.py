@@ -15,6 +15,7 @@ def get_main_admin():
     items = item.query.count()
 
     results = {
+        "success": True,
         'users_count': users,
         'doctors_count': doctors,
         'pharmacies_count': pharmacies,
@@ -64,7 +65,6 @@ def get_orders():
 @AdminRoutes.route("/orders/<int:order_id>", methods=['PATCH'])
 def patch_orders(order_id):
     data = json.loads(request.data)
-    print(data)
     order_data = order.query.get(order_id)
     try:
         order_data.approved = int(data['approved'])
@@ -82,7 +82,7 @@ def patch_orders(order_id):
 @AdminRoutes.route("/reports-detail", methods=["GET"])
 def get_reports_detail():
     query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
-        pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).filter(user.id == 2).all()
+        pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).all()
 
     reports = [r.detail() for r in query]
     for date in reports:
@@ -105,8 +105,7 @@ def get_reports_detail():
 @AdminRoutes.route("/users-detail", methods=["GET"])
 def get_users_detail():
     query = user.query.join(zone, zone.id == user.zone_id).filter(
-        user.role != "1").all()
-
+        user.role != 3).all()
     users = [u.detail() for u in query]
 
     for u in users:
@@ -114,9 +113,7 @@ def get_users_detail():
             report.user_id == u['id']).count()
         u['date_of_joining'] = str(
             u['date_of_joining'])
-
     result = {
-
         "success": True,
         "users": users
     }
