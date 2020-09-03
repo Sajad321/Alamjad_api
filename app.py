@@ -85,11 +85,11 @@ def create_app(test_config=None):
                 )
                 item_order.insert(new_item_order)
 
-            # msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
-            #               recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
-            # msg.html = render_template('msg.html', user=user, zone=zon, history=dat, pharmacy=ph, co=co, items=items,
-            #                            gift=gif)
-            # mail.send(msg)
+            msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
+                           recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
+            msg.html = render_template('msg.html', user=username, zone=zonename, history=date_of_order, pharmacy=pharmacy_name, co=companyname, items=itemsname_quantity_bonusintuple,
+                                        gift=giftcomment)
+            mail.send(msg)
 
             return jsonify({
                 'success': True,
