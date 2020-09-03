@@ -1,6 +1,6 @@
 from flask import request, Flask, jsonify, render_template, abort
 import logging
-from models import setup_db, order, item_order, zone,user, pharmacy
+from models import setup_db, order, item_order
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import json
