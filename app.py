@@ -87,7 +87,7 @@ def create_app(test_config=None):
 
             msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
                            recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
-            msg.html = render_template('msg.html', user=username, zone=zonename, history=date_of_order, pharmacy=pharmacy_name, co=companyname, items=itemsname_price_bonusintuple,
+            msg.html = render_template('msg.html', user=username, zone=zonename, history=date_of_order, pharmacy=pharmacy_name, co=companyname, items=itemsname_quantity_bonusintuple,
                                         gift=giftcomment)
             mail.send(msg)
 
