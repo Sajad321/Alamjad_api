@@ -1,11 +1,13 @@
 from flask import jsonify, abort, Blueprint, request
 import json
+from .auth import requires_auth
 from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availability_of_item, notification
 SalesmenRoutes = Blueprint('salesmen', __name__)
 
 
 @SalesmenRoutes.route("/reports", methods=["GET"])
-def get_reports():
+@requires_auth("salesmen:role")
+def get_reports(token):
     query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
         pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).filter(user.id == 2).all()
 
@@ -28,7 +30,8 @@ def get_reports():
 
 
 @SalesmenRoutes.route("/reports-form", methods=["GET"])
-def get_reports_form():
+@requires_auth("all:role")
+def get_reports_form(token):
     zones_query = zone.query.all()
     zones = [z.format() for z in zones_query]
     pharmacies_query = pharmacy.query.all()
@@ -50,7 +53,8 @@ def get_reports_form():
 
 
 @SalesmenRoutes.route("/reports", methods=["POST"])
-def post_reports_form():
+@requires_auth("salesmen:role")
+def post_reports_form(token):
     data = json.loads(request.data)
     try:
         history = data['history']
@@ -106,7 +110,8 @@ def post_reports_form():
 
 
 @SalesmenRoutes.route("/reports-form/<int:report_id>", methods=["GET"])
-def edit_report_form(report_id):
+@requires_auth("salesmen:role")
+def edit_report_form(token, report_id):
     query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
         pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).filter(user.id == 2, report.id == report_id).all()
 
@@ -123,7 +128,8 @@ def edit_report_form(report_id):
 
 
 @SalesmenRoutes.route("/reports/<int:report_id>", methods=["PATCH"])
-def patch_report_form(report_id):
+@requires_auth("salesmen:role")
+def patch_report_form(token, report_id):
     data = json.loads(request.data)
     acceptance_of_item_data = acceptance_of_item.query.get(
         data['acceptance_of_item'])

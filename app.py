@@ -4,7 +4,7 @@ from models import setup_db, order, item_order
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import json
-from routes.auth import AuthError
+from routes.auth import AuthError, requires_auth
 
 
 def create_app(test_config=None):
@@ -46,8 +46,10 @@ def create_app(test_config=None):
     app.register_blueprint(AdminRoutes)
 
     @app.route('/orders', methods=['POST'])
+    @requires_auth("all:role")
     def post_order():
         data = json.loads(request.data)
+        print(data)
         try:
             [provider, user_id] = data['user_id'].split('|')
             user_name = data['user_name']
@@ -62,7 +64,6 @@ def create_app(test_config=None):
             zone_name = data['zone_name']
             comment = data['comment']
             price = data['price']
-
             new_order = order(
                 date_of_order=date_of_order,
                 zone_id=zone_id,
@@ -75,6 +76,7 @@ def create_app(test_config=None):
             )
             id_order = order.insert(new_order)
 
+            print("success")
             items = data['items']
             for i in items:
                 i_id = i['item_id']
@@ -90,13 +92,16 @@ def create_app(test_config=None):
                     gift=i_gift
                 )
                 item_order.insert(new_item_order)
-            items = tuple(items)
+            print("success")
+            # items = tuple(items)
+            print(items)
             msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
                           recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
             msg.html = render_template('msg.html', user=user_name, zone=zone_name, history=date_of_order, pharmacy=pharmacy_name, co=company_name, items=items,
                                        gift=comment)
             mail.send(msg)
 
+            print("success3")
             return jsonify({
                 'success': True,
             }), 201

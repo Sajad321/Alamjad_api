@@ -1,12 +1,14 @@
 from flask import jsonify, abort, Blueprint, request
 import json
+from .auth import requires_auth
 from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availability_of_item, notification, item_order
 
 AdminRoutes = Blueprint('admin', __name__)
 
 
 @AdminRoutes.route("/main-admin", methods=['GET'])
-def get_main_admin():
+@requires_auth("all:role")
+def get_main_admin(token):
     users = user.query.count()
     doctors = doctor.query.count()
     pharmacies = pharmacy.query.count()
@@ -28,7 +30,8 @@ def get_main_admin():
 
 
 @AdminRoutes.route("/notifications", methods=['GET'])
-def get_notifications():
+@requires_auth("admin:role")
+def get_notifications(token):
     query = notification.query.join(
         report, report.id == notification.report_id).order_by(notification.id.desc()).all()
     notifications = [n.format() for n in query]
@@ -42,7 +45,8 @@ def get_notifications():
 
 
 @AdminRoutes.route("/orders", methods=['GET'])
-def get_orders():
+@requires_auth("admin:role")
+def get_orders(token):
     query = order.query.join(user, user.id == order.user_id).join(doctor, doctor.id == order.doctor_id).join(zone, zone.id == order.zone_id).join(
         pharmacy, pharmacy.id == order.pharmacy_id).join(company, company.id == order.company_id).order_by(order.id.desc()).all()
     orders = [o.detail() for o in query]
@@ -63,7 +67,8 @@ def get_orders():
 
 
 @AdminRoutes.route("/orders/<int:order_id>", methods=['PATCH'])
-def patch_orders(order_id):
+@requires_auth("admin:role")
+def patch_orders(token, order_id):
     data = json.loads(request.data)
     order_data = order.query.get(order_id)
     try:
@@ -80,7 +85,8 @@ def patch_orders(order_id):
 
 
 @AdminRoutes.route("/reports-detail", methods=["GET"])
-def get_reports_detail():
+@requires_auth("admin:role")
+def get_reports_detail(token):
     query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
         pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).all()
 
@@ -103,7 +109,8 @@ def get_reports_detail():
 
 
 @AdminRoutes.route("/users-detail", methods=["GET"])
-def get_users_detail():
+@requires_auth("admin:role")
+def get_users_detail(token):
     query = user.query.join(zone, zone.id == user.zone_id).filter(
         user.role != 3).all()
     users = [u.detail() for u in query]
@@ -121,7 +128,8 @@ def get_users_detail():
 
 
 @AdminRoutes.route("/doctors-detail", methods=["GET"])
-def get_doctors_detail():
+@requires_auth("admin:role")
+def get_doctors_detail(token):
     query = doctor.query.join(zone, zone.id == doctor.zone_id).join(
         pharmacy, pharmacy.id == doctor.pharmacy_id).all()
 
@@ -140,7 +148,8 @@ def get_doctors_detail():
 
 
 @AdminRoutes.route("/doctors-form", methods=["GET"])
-def get_doctors_form():
+@requires_auth("admin:role")
+def get_doctors_form(token):
     zones_query = zone.query.all()
     zones = [z.format() for z in zones_query]
     pharmacies_query = pharmacy.query.all()
@@ -153,7 +162,8 @@ def get_doctors_form():
 
 
 @AdminRoutes.route("/doctors", methods=["POST"])
-def post_doctors_form():
+@requires_auth("admin:role")
+def post_doctors_form(token):
     data = json.loads(request.data)
     try:
         name = data['name']
@@ -189,7 +199,8 @@ def post_doctors_form():
 
 
 @AdminRoutes.route("/doctors/<int:doctor_id>", methods=["PATCH"])
-def edit_doctor_form(doctor_id):
+@requires_auth("admin:role")
+def edit_doctor_form(token, doctor_id):
     data = json.loads(request.data)
     doctor_data = doctor.query.get(doctor_id)
     try:
@@ -226,7 +237,8 @@ def edit_doctor_form(doctor_id):
 
 
 @AdminRoutes.route("/pharmacies-detail", methods=["GET"])
-def get_pharmacies_detail():
+@requires_auth("admin:role")
+def get_pharmacies_detail(token):
     query = pharmacy.query.join(zone, zone.id == pharmacy.zone_id).all()
 
     pharmacies = [p.detail() for p in query]
@@ -244,7 +256,8 @@ def get_pharmacies_detail():
 
 
 @AdminRoutes.route("/pharmacies-form", methods=["GET"])
-def get_pharmacies_form():
+@requires_auth("admin:role")
+def get_pharmacies_form(token):
     zones_query = zone.query.all()
     zones = [z.format() for z in zones_query]
 
@@ -254,7 +267,8 @@ def get_pharmacies_form():
 
 
 @AdminRoutes.route("/pharmacies", methods=["POST"])
-def post_pharmacies_form():
+@requires_auth("admin:role")
+def post_pharmacies_form(token):
     data = json.loads(request.data)
     try:
         name = data['name']
@@ -284,7 +298,8 @@ def post_pharmacies_form():
 
 
 @AdminRoutes.route("/pharmacies/<int:pharmacy_id>", methods=["PATCH"])
-def edit_pharmacy_form(pharmacy_id):
+@requires_auth("admin:role")
+def edit_pharmacy_form(token, pharmacy_id):
     data = json.loads(request.data)
     pharmacy_data = pharmacy.query.get(pharmacy_id)
     try:
@@ -315,7 +330,8 @@ def edit_pharmacy_form(pharmacy_id):
 
 
 @AdminRoutes.route("/companies", methods=["GET"])
-def get_companies():
+@requires_auth("admin:role")
+def get_companies(token):
     query = company.query.all()
 
     companies = [c.format() for c in query]
@@ -329,7 +345,8 @@ def get_companies():
 
 
 @AdminRoutes.route("/companies", methods=["POST"])
-def post_companies_form():
+@requires_auth("admin:role")
+def post_companies_form(token):
     data = json.loads(request.data)
     try:
         name = data['name']
@@ -349,7 +366,8 @@ def post_companies_form():
 
 
 @AdminRoutes.route("/companies/<int:company_id>", methods=["PATCH"])
-def edit_companies_form(company_id):
+@requires_auth("admin:role")
+def edit_companies_form(token, company_id):
     data = json.loads(request.data)
     company_data = company.query.get(company_id)
     try:
@@ -368,7 +386,8 @@ def edit_companies_form(company_id):
 
 
 @AdminRoutes.route("/items-detail", methods=["GET"])
-def get_items_detail():
+@requires_auth("admin:role")
+def get_items_detail(token):
     query = item.query.join(company, company.id == item.company_id).all()
 
     items = [i.detail() for i in query]
@@ -386,7 +405,8 @@ def get_items_detail():
 
 
 @AdminRoutes.route("/items-form", methods=["GET"])
-def get_items_form():
+@requires_auth("admin:role")
+def get_items_form(token):
     companies_query = company.query.all()
     companies = [c.format() for c in companies_query]
 
@@ -396,7 +416,8 @@ def get_items_form():
 
 
 @AdminRoutes.route("/items", methods=["POST"])
-def post_items_form():
+@requires_auth("admin:role")
+def post_items_form(token):
     data = json.loads(request.data)
     try:
         name = data['name']
@@ -421,7 +442,8 @@ def post_items_form():
 
 
 @AdminRoutes.route("/items/<int:item_id>", methods=["PATCH"])
-def edit_items_form(item_id):
+@requires_auth("admin:role")
+def edit_items_form(token, item_id):
     data = json.loads(request.data)
     item_data = item.query.get(item_id)
     try:
