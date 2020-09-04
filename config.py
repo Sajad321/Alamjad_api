@@ -4,11 +4,10 @@ SECRET_KEY = os.urandom(32)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Enable debug mode.
-DEBUG = True
-ENV = 'development'
+# DEBUG = True
+# ENV = 'development'
 # Connect to the database
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root@localhost:3306/MRSmart?charset=utf8'
+SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://alamjads_admin:3fWg8qzKlF[K@localhost:3306/alamjads_api?charset=utf8'
 
-# TODO IMPLEMENT DATABASE URL
 JSON_AS_ASCII = False

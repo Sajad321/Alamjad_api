@@ -1,6 +1,6 @@
 from flask import jsonify, abort, Blueprint, request
 import json
-from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availabilty_of_item, notification, item_order
+from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availability_of_item, notification, item_order
 
 AdminRoutes = Blueprint('admin', __name__)
 

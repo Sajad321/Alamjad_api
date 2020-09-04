@@ -50,11 +50,16 @@ def create_app(test_config=None):
         data = json.loads(request.data)
         try:
             [provider, user_id] = data['user_id'].split('|')
+            user_name = data['user_name']
             company_id = data['company_id']
+            company_name = data['company_name']
             date_of_order = data['date_of_order']
             pharmacy_id = data['pharmacy_id']
+            pharmacy_name = data['pharmacy_name']
             doctor_id = data['doctor_id']
+            doctor_name = data['doctor_name']
             zone_id = data['zone_id']
+            zone_name = data['zone_name']
             comment = data['comment']
             price = data['price']
 
@@ -73,6 +78,7 @@ def create_app(test_config=None):
             items = data['items']
             for i in items:
                 i_id = i['item_id']
+                i_name = i['item_name']
                 i_qty = i['qty']
                 i_bonus = int(i['bonus'])
                 i_gift = i['gift'] == "true"
@@ -84,11 +90,11 @@ def create_app(test_config=None):
                     gift=i_gift
                 )
                 item_order.insert(new_item_order)
-
+            items = tuple(items)
             msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
-                           recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
-            msg.html = render_template('msg.html', user=username, zone=zonename, history=date_of_order, pharmacy=pharmacy_name, co=companyname, items=itemsname_quantity_bonusintuple,
-                                        gift=giftcomment)
+                          recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
+            msg.html = render_template('msg.html', user=user_name, zone=zone_name, history=date_of_order, pharmacy=pharmacy_name, co=company_name, items=items,
+                                       gift=comment)
             mail.send(msg)
 
             return jsonify({
