@@ -50,7 +50,7 @@ class user(Base):
     name = Column(String(200), nullable=False)
     username = Column(String(200), unique=True)
     email = Column(String(200), nullable=False, unique=True)
-    phone_number = Column(Integer)
+    phone_number = Column(String(15))
     date_of_joining = Column(Date)
     zone_id = Column(Integer, ForeignKey('zone.id'))
     role = Column(Integer)
