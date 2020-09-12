@@ -1,7 +1,7 @@
 from flask import jsonify, abort, Blueprint, request
 import json
 from .auth import requires_auth
-from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, company, item, acceptance_of_item, order, availability_of_item, notification, item_order
+from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, doctor_pharmacies, company, item, acceptance_of_item, order, availability_of_item, notification, item_order
 
 AdminRoutes = Blueprint('admin', __name__)
 
@@ -9,7 +9,7 @@ AdminRoutes = Blueprint('admin', __name__)
 @AdminRoutes.route("/main-admin", methods=['GET'])
 @requires_auth("all:role")
 def get_main_admin(token):
-    users = user.query.count()
+    users = user.query.filter(user.role == 3).count()
     doctors = doctor.query.count()
     pharmacies = pharmacy.query.count()
     reports = report.query.count()
@@ -35,7 +35,6 @@ def get_notifications(token):
     query = notification.query.join(
         report, report.id == notification.report_id).order_by(notification.id.desc()).all()
     notifications = [n.format() for n in query]
-    print(notifications)
     results = {
         "success": True,
         'notifications': notifications
@@ -47,8 +46,8 @@ def get_notifications(token):
 @AdminRoutes.route("/orders", methods=['GET'])
 @requires_auth("admin:role")
 def get_orders(token):
-    query = order.query.join(user, user.id == order.user_id).join(doctor, doctor.id == order.doctor_id).join(zone, zone.id == order.zone_id).join(
-        pharmacy, pharmacy.id == order.pharmacy_id).join(company, company.id == order.company_id).order_by(order.id.desc()).all()
+    query = order.query.join(user, user.id == order.user_id).join(zone, zone.id == order.zone_id).join(
+        pharmacy, pharmacy.id == order.pharmacy_id).join(doctor, doctor.id == order.doctor_id).join(company, company.id == order.company_id).order_by(order.id.desc()).all()
     orders = [o.detail() for o in query]
     for date in orders:
         date['date_of_order'] = str(
@@ -57,7 +56,6 @@ def get_orders(token):
             item, item.id == item_order.item_id).filter(item_order.order_id == date['id']).all()
         date['items'] = [i.detail() for i in items_query]
         date["seeMore"] = {"order_id": date['id'], "see": False}
-    print(orders)
     results = {
         "success": True,
         'orders': orders
@@ -88,15 +86,16 @@ def patch_orders(token, order_id):
 @requires_auth("admin:role")
 def get_reports_detail(token):
     query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
-        pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).all()
+        pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).order_by(report.id.desc()).all()
 
     reports = [r.detail() for r in query]
     for date in reports:
         last_pharmacy_order_query = history_of_pharmacy.query.join(order, order.id == history_of_pharmacy.order_id).filter(
-            history_of_pharmacy.pharmacy_id == date['pharmacy_id']).order_by(order.date_of_order).first()
-        data = history_of_pharmacy.format(last_pharmacy_order_query)
-        date['last_pharmacy_order_date'] = str(
-            data['last_pharmacy_order_date'])
+            history_of_pharmacy.pharmacy_id == date['pharmacy_id']).order_by(order.date_of_order.desc()).first()
+        if last_pharmacy_order_query:
+            data = history_of_pharmacy.format(last_pharmacy_order_query)
+            date['last_pharmacy_order_date'] = str(
+                data['last_pharmacy_order_date'])
         date['history'] = str(
             date['history'])
 
@@ -112,7 +111,7 @@ def get_reports_detail(token):
 @requires_auth("admin:role")
 def get_users_detail(token):
     query = user.query.join(zone, zone.id == user.zone_id).filter(
-        user.role != 3).all()
+        user.role == 3).all()
     users = [u.detail() for u in query]
 
     for u in users:
@@ -130,12 +129,15 @@ def get_users_detail(token):
 @AdminRoutes.route("/doctors-detail", methods=["GET"])
 @requires_auth("admin:role")
 def get_doctors_detail(token):
-    query = doctor.query.join(zone, zone.id == doctor.zone_id).join(
-        pharmacy, pharmacy.id == doctor.pharmacy_id).all()
+    query = doctor.query.join(zone, zone.id == doctor.zone_id).all()
 
     doctors = [d.detail() for d in query]
 
     for d in doctors:
+        doctors_pharmacies_query = doctor_pharmacies.query.join(
+            doctor, doctor.id == doctor_pharmacies.doctor_id).join(pharmacy, pharmacy.id == doctor_pharmacies.pharmacy_id).filter(doctor_pharmacies.doctor_id == d['id']).all()
+        doctors_pharmacies = [dp.detail() for dp in doctors_pharmacies_query]
+        d["pharmacies"] = doctors_pharmacies
         d['date_of_joining'] = str(
             d['date_of_joining'])
 
@@ -171,7 +173,6 @@ def post_doctors_form(token):
         email = data['email']
         zone_id = data['zone_id']
         phone = data['phone']
-        pharmacy_id = data['pharmacy_id']
         speciality = data['speciality']
         d_class = data['speciality']
         support = data['support']
@@ -184,11 +185,16 @@ def post_doctors_form(token):
             phone=phone,
             speciality=speciality,
             d_class=d_class,
-            pharmacy_id=pharmacy_id,
             support=support
         )
 
-        doctor.insert(new_doctor)
+        id_doctor = doctor.insert(new_doctor)
+
+        pharmacies = data['pharmacies']
+        for p in pharmacies:
+            new_doctor_pharmacy = doctor_pharmacies(
+                doctor_id=id_doctor, pharmacy_id=p['pharmacy_id'])
+            doctor_pharmacies.insert(new_doctor_pharmacy)
 
         return jsonify({
             'success': True,
@@ -214,7 +220,6 @@ def edit_doctor_form(token, doctor_id):
         zone_id = data['zone_id']
         speciality = data['speciality']
         d_class = data['d_class']
-        pharmacy_id = data['pharmacy_id']
         support = data['support']
         date_of_joining = data['date_of_joining']
 
@@ -222,11 +227,21 @@ def edit_doctor_form(token, doctor_id):
         doctor_data.zone_id = zone_id
         doctor_data.speciality = speciality
         doctor_data.d_class = d_class
-        doctor_data.pharmacy_id = pharmacy_id
         doctor_data.support = support
         doctor_data.date_of_joining = date_of_joining
 
         doctor.update(doctor_data)
+
+        pharmacies = data['pharmacies']
+        for p in pharmacies:
+            if p['id']:
+                doctor_pharmacies_data = doctor_pharmacies.query.get(p['id'])
+                doctor_pharmacies_data.pharmacy_id = p['pharmacy_id']
+                doctor_pharmacies.update(doctor_pharmacies_data)
+            else:
+                new_doctor_pharmacy = doctor_pharmacies(
+                    doctor_id=doctor_id, pharmacy_id=p['pharmacy_id'])
+                doctor_pharmacies.insert(new_doctor_pharmacy)
 
         return jsonify({
             'success': True,
@@ -236,8 +251,8 @@ def edit_doctor_form(token, doctor_id):
         abort(500)
 
 
-@AdminRoutes.route("/pharmacies-detail", methods=["GET"])
-@requires_auth("admin:role")
+@ AdminRoutes.route("/pharmacies-detail", methods=["GET"])
+@ requires_auth("admin:role")
 def get_pharmacies_detail(token):
     query = pharmacy.query.join(zone, zone.id == pharmacy.zone_id).all()
 
@@ -255,8 +270,8 @@ def get_pharmacies_detail(token):
     return jsonify(result), 200
 
 
-@AdminRoutes.route("/pharmacies-form", methods=["GET"])
-@requires_auth("admin:role")
+@ AdminRoutes.route("/pharmacies-form", methods=["GET"])
+@ requires_auth("admin:role")
 def get_pharmacies_form(token):
     zones_query = zone.query.all()
     zones = [z.format() for z in zones_query]
@@ -266,14 +281,14 @@ def get_pharmacies_form(token):
     return jsonify(results), 200
 
 
-@AdminRoutes.route("/pharmacies", methods=["POST"])
-@requires_auth("admin:role")
+@ AdminRoutes.route("/pharmacies", methods=["POST"])
+@ requires_auth("admin:role")
 def post_pharmacies_form(token):
     data = json.loads(request.data)
     try:
         name = data['name']
         date_of_joining = data['date_of_joining']
-        phone_number = data['phone']
+        phone_number = data['phone_number']
         zone_id = data['zone_id']
         address = data['address']
         support = data['support']

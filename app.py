@@ -1,9 +1,12 @@
 from flask import request, Flask, jsonify, render_template, abort
 import logging
-from models import setup_db, order, item_order
+from models import setup_db, order, item_order, history_of_pharmacy, user
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import json
+from pytz import timezone
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
 from routes.auth import AuthError, requires_auth
 
 
@@ -47,7 +50,7 @@ def create_app(test_config=None):
 
     @app.route('/orders', methods=['POST'])
     @requires_auth("all:role")
-    def post_order():
+    def post_order(token):
         data = json.loads(request.data)
         print(data)
         try:
@@ -59,7 +62,6 @@ def create_app(test_config=None):
             pharmacy_id = data['pharmacy_id']
             pharmacy_name = data['pharmacy_name']
             doctor_id = data['doctor_id']
-            doctor_name = data['doctor_name']
             zone_id = data['zone_id']
             zone_name = data['zone_name']
             comment = data['comment']
@@ -69,14 +71,13 @@ def create_app(test_config=None):
                 zone_id=zone_id,
                 user_id=user_id,
                 company_id=company_id,
-                doctor_id=doctor_id,
                 pharmacy_id=pharmacy_id,
+                doctor_id=doctor_id,
                 comment=comment,
                 price=price
             )
             id_order = order.insert(new_order)
 
-            print("success")
             items = data['items']
             for i in items:
                 i_id = i['item_id']
@@ -92,16 +93,16 @@ def create_app(test_config=None):
                     gift=i_gift
                 )
                 item_order.insert(new_item_order)
-            print("success")
-            # items = tuple(items)
-            print(items)
+
+            new_history_of_pharmacy = history_of_pharmacy(
+                pharmacy_id=pharmacy_id, order_id=id_order)
+            history_of_pharmacy.insert(new_history_of_pharmacy)
             msg = Message('طلبية - نظام الاعلام الدوائي', sender='alamjads@alamjadsb.com',
-                          recipients=['krvhrv188@gmail.com', 'dr.husseinfadel@alamjadpharm.com'])
+                          recipients=['dr.adnan@alamjadpharm.com', 'dr.husseinfadel@alamjadpharm.com'])
             msg.html = render_template('msg.html', user=user_name, zone=zone_name, history=date_of_order, pharmacy=pharmacy_name, co=company_name, items=items,
                                        gift=comment)
             mail.send(msg)
 
-            print("success3")
             return jsonify({
                 'success': True,
             }), 201
@@ -109,13 +110,27 @@ def create_app(test_config=None):
         except:
             abort(500)
 
+    cron = BackgroundScheduler(daemon=True)
+
+    cron.start()
+
+    @cron.scheduled_job(trigger="cron", day="*/1", timezone=timezone("Asia/Baghdad"))
+    def salesmen_refresh_daily_report():
+        for row in user.query.filter(user.role == 3).all():
+            row.daily_report = False
+        user.update(user.query.filter(user.role == 3).all())
+
     @app.errorhandler(AuthError)
     def auth_error(e):
         return jsonify(e.error), e.status_code
+
+    # Shut down the scheduler when exiting the app
+    atexit.register(lambda: cron.shutdown())
+
     return app
 
 
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080)
+    app.run(host='127.0.0.1', port=8080)  # , use_reloader=False
