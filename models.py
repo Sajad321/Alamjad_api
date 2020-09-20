@@ -332,7 +332,7 @@ class order(Base):
             'user': self.user.name,
             'zone': self.zone.zone,
             'pharmacy': self.pharmacy.name,
-            'doctor': self.doctor.name,
+            'doctor_id': self.doctor_id,
             'company': self.company.name,
             'comment': self.comment,
             'price': self.price,
@@ -517,6 +517,9 @@ class doctor(Base):
             'zone_id': self.zone_id,
 
         }
+
+    def d_name(self):
+        return self.name
 
 
 class history_of_doctor(Base):
