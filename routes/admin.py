@@ -47,11 +47,14 @@ def get_notifications(token):
 @requires_auth("admin:role")
 def get_orders(token):
     query = order.query.join(user, user.id == order.user_id).join(zone, zone.id == order.zone_id).join(
-        pharmacy, pharmacy.id == order.pharmacy_id).join(doctor, doctor.id == order.doctor_id).join(company, company.id == order.company_id).order_by(order.id.desc()).all()
+        pharmacy, pharmacy.id == order.pharmacy_id).join(company, company.id == order.company_id).order_by(order.id.desc()).all()
     orders = [o.detail() for o in query]
     for date in orders:
         date['date_of_order'] = str(
             date['date_of_order'])
+        doctor_query = doctor.query.get(date['doctor_id'])
+        if doctor_query:
+            date['doctor'] = doctor.d_name(doctor_query)
         items_query = item_order.query.join(order, order.id == item_order.order_id).join(
             item, item.id == item_order.item_id).filter(item_order.order_id == date['id']).all()
         date['items'] = [i.detail() for i in items_query]
@@ -174,7 +177,7 @@ def post_doctors_form(token):
         zone_id = data['zone_id']
         phone = data['phone']
         speciality = data['speciality']
-        d_class = data['speciality']
+        d_class = data['d_class']
         support = data['support']
 
         new_doctor = doctor(
