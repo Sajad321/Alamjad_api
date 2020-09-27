@@ -129,6 +129,49 @@ def get_users_detail(token):
     return jsonify(result), 200
 
 
+@AdminRoutes.route("/salesmen-detail", methods=["GET"])
+@requires_auth("admin:role")
+def get_salesmen_detail(token):
+    query = user.query.filter(
+        user.role == 3).all()
+    salesmen = [s.table() for s in query]
+    if request.args.get("to"):
+        for s in salesmen:
+            s['reports_count'] = report.query.filter(
+                report.user_id == s['id'], report.date > request.args.get("from"), report.date < request.args.get("to")).count()
+            s['orders_count'] = order.query.filter(
+                order.user_id == s['id'], order.date_of_order > request.args.get("from"), order.date_of_order < request.args.get("to")).count()
+            orders_price_query = [value for (value,) in order.query.with_entities(order.price).filter(
+                order.user_id == s['id'], order.date_of_order > request.args.get("from"), order.date_of_order < request.args.get("to")).all()]
+            s['orders_price'] = sum(orders_price_query)
+
+    elif request.args.get("from"):
+        for s in salesmen:
+            s['reports_count'] = report.query.filter(
+                report.user_id == s['id'], report.date > request.args.get("from")).count()
+            s['orders_count'] = order.query.filter(
+                order.user_id == s['id'], order.date_of_order > request.args.get("from")).count()
+            orders_price_query = [value for (value,) in order.query.with_entities(order.price).filter(
+                order.user_id == s['id'], order.date_of_order > request.args.get("from")).all()]
+            s['orders_price'] = sum(orders_price_query)
+
+    else:
+        for s in salesmen:
+            s['reports_count'] = report.query.filter(
+                report.user_id == s['id']).count()
+            s['orders_count'] = order.query.filter(
+                order.user_id == s['id']).count()
+            orders_price_query = [value for (value,) in order.query.with_entities(order.price).filter(
+                order.user_id == s['id']).all()]
+            s['orders_price'] = sum(orders_price_query)
+
+    result = {
+        "success": True,
+        "salesmen": salesmen
+    }
+    return jsonify(result), 200
+
+
 @AdminRoutes.route("/doctors-detail", methods=["GET"])
 @requires_auth("admin:role")
 def get_doctors_detail(token):

@@ -1,6 +1,6 @@
 from flask import request, Flask, jsonify, render_template, abort
 import logging
-from models import setup_db, order, item_order, history_of_pharmacy, user
+from models import setup_db, order, item_order, history_of_pharmacy, user, pharmacy, doctor
 from flask_cors import CORS
 from flask_mail import Mail, Message
 import json
@@ -52,7 +52,6 @@ def create_app(test_config=None):
     @requires_auth("all:role")
     def post_order(token):
         data = json.loads(request.data)
-        print(data)
         try:
             [provider, user_id] = data['user_id'].split('|')
             user_name = data['user_name']
@@ -61,22 +60,34 @@ def create_app(test_config=None):
             date_of_order = data['date_of_order']
             pharmacy_id = data['pharmacy_id']
             pharmacy_name = data['pharmacy_name']
-            doctor_id = data['doctor_id']
             zone_id = data['zone_id']
             zone_name = data['zone_name']
             comment = data['comment']
             price = data['price']
-            new_order = order(
-                date_of_order=date_of_order,
-                zone_id=zone_id,
-                user_id=user_id,
-                company_id=company_id,
-                pharmacy_id=pharmacy_id,
-                doctor_id=doctor_id,
-                comment=comment,
-                price=price
-            )
-            id_order = order.insert(new_order)
+            if data['doctor_id'] != "":
+                doctor_id = data['doctor_id']
+                new_order = order(
+                    date_of_order=date_of_order,
+                    zone_id=zone_id,
+                    user_id=user_id,
+                    company_id=company_id,
+                    pharmacy_id=pharmacy_id,
+                    doctor_id=doctor_id,
+                    comment=comment,
+                    price=price
+                )
+                id_order = order.insert(new_order)
+            else:
+                new_order = order(
+                    date_of_order=date_of_order,
+                    zone_id=zone_id,
+                    user_id=user_id,
+                    company_id=company_id,
+                    pharmacy_id=pharmacy_id,
+                    comment=comment,
+                    price=price
+                )
+                id_order = order.insert(new_order)
 
             items = data['items']
             for i in items:
@@ -114,11 +125,23 @@ def create_app(test_config=None):
 
     cron.start()
 
-    @cron.scheduled_job(trigger="cron", day="*/1", timezone=timezone("Asia/Baghdad"))
+    @cron.scheduled_job(trigger="cron", day="*/1", timezone=timezone("Asia/Baghdad"), misfire_grace_time=None)
     def salesmen_refresh_daily_report():
         for row in user.query.filter(user.role == 3).all():
             row.daily_report = False
         user.update(user.query.filter(user.role == 3).all())
+
+    @cron.scheduled_job(trigger="cron", day="*/20", timezone=timezone("Asia/Baghdad"), misfire_grace_time=None)
+    def doctors_refresh_report_activity():
+        for row in doctor.query.all():
+            row.report_activity = False
+        doctor.update(doctor.query.all())
+
+    @cron.scheduled_job(trigger="cron", month="*/1", timezone=timezone("Asia/Baghdad"), misfire_grace_time=None)
+    def pharmacies_refresh_monthly_order():
+        for row in pharmacy.query.all():
+            row.order_activity = False
+        pharmacy.update(pharmacy.query.all())
 
     @app.errorhandler(AuthError)
     def auth_error(e):

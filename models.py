@@ -81,6 +81,12 @@ class user(Base):
     def take_role(self):
         return self.role
 
+    def table(self):
+        return {
+            'id': self.id,
+            'name': self.name
+        }
+
 
 class history_of_user_activity(Base):
     __tablename__ = 'history_of_user_activity'
@@ -139,6 +145,7 @@ class pharmacy(Base):
     zone_id = Column(Integer, ForeignKey('zone.id'), nullable=False)
     support = Column(String(200))
     date_of_joining = Column(Date)
+    order_activity = Column(Boolean, default=False)
     histories_of_user_activity = db.relationship(
         'history_of_user_activity', backref=db.backref('pharmacy', uselist=False), lazy='dynamic')
     orders = db.relationship('order', backref=db.backref(
@@ -479,6 +486,7 @@ class doctor(Base):
     d_class = Column(String(2))
     support = Column(String(200), nullable=False)
     date_of_joining = Column(Date)
+    report_activity = Column(Boolean, default=False)
     histories_of_user_activity = db.relationship(
         'history_of_user_activity', backref=db.backref('doctor', uselist=False), lazy='dynamic')
     orders = db.relationship('order', backref=db.backref(
