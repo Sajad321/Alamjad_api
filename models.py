@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, String, Integer, Date, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, Float, Date, ForeignKey, Boolean
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 import json
@@ -172,7 +172,8 @@ class pharmacy(Base):
             'zone': self.zone.zone,
             'zone_id': self.zone_id,
             'support': self.support,
-            'date_of_joining': self.date_of_joining
+            'date_of_joining': self.date_of_joining,
+            'order_activity': self.order_activity
         }
 
     def short(self):
@@ -190,7 +191,7 @@ class item(Base):
     name = Column(String(200), nullable=False)
     company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
     expire_date = Column(Date, nullable=False)
-    price = Column(Integer)
+    price = Column(Float)
     acceptance_of_items = db.relationship(
         'acceptance_of_item', backref=db.backref('item', uselist=False), lazy='dynamic')
     availability_of_items = db.relationship(
@@ -300,6 +301,9 @@ class report(Base):
             'available': self.availability_of_item.available
         }
 
+    def get_date(self):
+        return self.date
+
 
 class order(Base):
     __tablename__ = 'order'
@@ -313,7 +317,7 @@ class order(Base):
     comment = Column(String(200))
     date_of_order = Column(Date, nullable=False)
     approved = Column(Integer, default=0)
-    price = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
     histories_of_doctor = db.relationship(
         'history_of_doctor', backref=db.backref('order', uselist=False), lazy='dynamic')
     histories_of_pharmacy = db.relationship(
@@ -346,6 +350,9 @@ class order(Base):
             'date_of_order': self.date_of_order
         }
 
+    def get_date(self):
+        return self.date_of_order
+
 
 class item_order(Base):
     __tablename__ = 'item_order'
@@ -354,7 +361,7 @@ class item_order(Base):
     order_id = Column(Integer, ForeignKey("order.id"), nullable=False)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     quantity = Column(Integer, default=1)
-    bonus = Column(Integer)
+    bonus = Column(Float)
     gift = Column(Boolean, default=False)
 
     def format(self):
@@ -516,6 +523,7 @@ class doctor(Base):
             'd_class': self.d_class,
             'support': self.support,
             'date_of_joining': self.date_of_joining,
+            'report_activity': self.report_activity,
         }
 
     def short(self):

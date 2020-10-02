@@ -105,6 +105,10 @@ def post_reports_form(token):
         user_data.daily_report = True
         user.update(user_data)
 
+        doctor_data = doctor.query.get(doctor_id)
+        doctor_data.report_activity = True
+        doctor.update(doctor_data)
+
         new_notification = notification(report_id=id_report)
 
         notification.insert(new_notification)

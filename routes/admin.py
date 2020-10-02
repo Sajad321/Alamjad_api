@@ -484,7 +484,7 @@ def post_items_form(token):
         name = data['name']
         company_id = data['company_id']
         expire_date = data['expire_date']
-        price = int(data['price'])
+        price = data['price']
         new_item = item(
             name=name,
             company_id=company_id,
@@ -511,7 +511,7 @@ def edit_items_form(token, item_id):
         name = data['name']
         company_id = data['company_id']
         expire_date = data['expire_date']
-        price = int(data['price'])
+        price = data['price']
 
         item_data.name = name
         item_data.company_id = company_id
