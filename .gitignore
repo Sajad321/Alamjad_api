@@ -2,3 +2,5 @@ MRSmart
 New folder
 .vscode
 __pycache__
+migrations
+.idea
