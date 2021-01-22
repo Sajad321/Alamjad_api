@@ -2,8 +2,18 @@ from flask import jsonify, abort, Blueprint, request
 import json
 from .auth import requires_auth
 from models import user, report, history_of_pharmacy, history_of_user_activity, doctor, zone, pharmacy, doctor_pharmacies, company, item, acceptance_of_item, order, availability_of_item, notification, item_order
+from math import ceil
 
 AdminRoutes = Blueprint('admin', __name__)
+
+THINGS_PER_PAGE = 50
+
+
+def paginate(request, selection):
+    page = request.args.get('page', 1, type=int)
+    current = selection.paginate(page, THINGS_PER_PAGE, False).items
+
+    return current
 
 
 @AdminRoutes.route("/main-admin", methods=['GET'])
@@ -46,10 +56,76 @@ def get_notifications(token):
 @AdminRoutes.route("/orders", methods=['GET'])
 @requires_auth("admin:role")
 def get_orders(token):
-    query = order.query.join(user, user.id == order.user_id).join(zone, zone.id == order.zone_id).join(
-        pharmacy, pharmacy.id == order.pharmacy_id).join(company, company.id == order.company_id).order_by(order.id.desc()).all()
-    orders = [o.detail() for o in query]
-    for date in orders:
+    checkbox = request.args.get("checkbox")
+    search_type = request.args.get("searchType", None, type=int)
+    search = request.args.get("search", None)
+    search1 = request.args.get("search1", None)
+    search2 = request.args.get("search2", None)
+    if (search == None or search == "undefined") and (search1 == None or search1 == "undefined") and (search2 == None or search2 == "undefined"):
+        query = order.query.join(user, user.id == order.user_id).join(zone, zone.id == order.zone_id).join(
+            pharmacy, pharmacy.id == order.pharmacy_id).join(company, company.id == order.company_id)
+
+    else:
+        query = order.query.join(user, user.id == order.user_id).join(zone, zone.id == order.zone_id).join(
+            pharmacy, pharmacy.id == order.pharmacy_id).join(company, company.id == order.company_id)
+
+        if search_type == 1:
+            query = query.filter(order.date_of_order >= search1,
+                                 order.date_of_order <= search2)
+
+        elif search_type == 2:
+            if search2 or search2 == "undefined":
+                query = query.filter(user.name.ilike('%{}%'.format(search)), order.date_of_order >= search1,
+                                     order.date_of_order <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(user.name.ilike(
+                    '%{}%'.format(search)), order.date_of_order >= search1)
+            elif search or search == "undefined":
+                query = query.filter(user.name.ilike('%{}%'.format(search)))
+
+        elif search_type == 3:
+            if search2 or search2 == "undefined":
+                query = query.filter(zone.zone.ilike('%{}%'.format(search)), order.date_of_order >= search1,
+                                     order.date_of_order <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(zone.zone.ilike(
+                    '%{}%'.format(search)), order.date_of_order >= search1)
+            elif search or search == "undefined":
+                query = query.filter(zone.zone.ilike('%{}%'.format(search)))
+
+        elif search_type == 4:
+            if search2 or search2 == "undefined":
+                query = query.filter(pharmacy.name.ilike('%{}%'.format(search)), order.date_of_order >= search1,
+                                     order.date_of_order <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(pharmacy.name.ilike(
+                    '%{}%'.format(search)), order.date_of_order >= search1)
+            elif search or search == "undefined":
+                query = query.filter(
+                    pharmacy.name.ilike('%{}%'.format(search)))
+
+        elif search_type == 5:
+            if search2 or search2 == "undefined":
+                query = query.filter(company.name.ilike('%{}%'.format(search)), order.date_of_order >= search1,
+                                     order.date_of_order <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(company.name.ilike(
+                    '%{}%'.format(search)), order.date_of_order >= search1)
+            elif search or search == "undefined":
+                query = query.filter(company.name.ilike('%{}%'.format(search)))
+
+        elif search_type == 6:
+            query = query.filter(item.name.ilike('%{}%'.format(search)))
+
+    if checkbox == "true":
+        query = query.filter(order.approved == 1)
+
+    query = query.order_by(order.id.desc())
+
+    orders = paginate(request, query)
+    current_orders = [o.detail() for o in orders]
+
+    for date in current_orders:
         date['date_of_order'] = str(
             date['date_of_order'])
         doctor_query = doctor.query.get(date['doctor_id'])
@@ -59,9 +135,13 @@ def get_orders(token):
             item, item.id == item_order.item_id).filter(item_order.order_id == date['id']).all()
         date['items'] = [i.detail() for i in items_query]
         date["seeMore"] = {"order_id": date['id'], "see": False}
+
+    pages = ceil(query.count() / THINGS_PER_PAGE)
+
     results = {
         "success": True,
-        'orders': orders
+        'orders': current_orders,
+        "pages": pages,
     }
 
     return jsonify(results), 200
@@ -88,11 +168,96 @@ def patch_orders(token, order_id):
 @AdminRoutes.route("/reports-detail", methods=["GET"])
 @requires_auth("admin:role")
 def get_reports_detail(token):
-    query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
-        pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id).order_by(report.id.desc()).all()
 
-    reports = [r.detail() for r in query]
-    for date in reports:
+    sorting = request.args.get("sorting", None)
+    sortingColumn = request.args.get("sortingColumn", None)
+    search_type = request.args.get("searchType", None, type=int)
+    search = request.args.get("search", None)
+    search1 = request.args.get("search1", None)
+    search2 = request.args.get("search2", None)
+    if (search == None or search == "undefined") and (search1 == None or search1 == "undefined") and (search2 == None or search2 == "undefined"):
+        query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
+            pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id)
+    else:
+        query = report.query.join(user, user.id == report.user_id).join(doctor, doctor.id == report.doctor_id).join(zone, zone.id == report.zone_id).join(
+            pharmacy, pharmacy.id == report.pharmacy_id).join(company, company.id == report.company_id).join(item, item.id == report.item_id).join(acceptance_of_item, acceptance_of_item.id == report.acceptance_of_item_id)
+
+        if search_type == 1:
+            query = query.filter(report.date >= search1,
+                                 report.date <= search2)
+        elif search_type == 2:
+            if search2 or search2 == "undefined":
+                query = query.filter(doctor.name.ilike('%{}%'.format(search)), report.date >= search1,
+                                     report.date <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(doctor.name.ilike(
+                    '%{}%'.format(search)), report.date >= search1)
+            elif search or search == "undefined":
+                query = query.filter(doctor.name.ilike('%{}%'.format(search)))
+
+        elif search_type == 3:
+            if search2 or search2 == "undefined":
+                query = query.filter(zone.zone.ilike('%{}%'.format(search)), report.date >= search1,
+                                     report.date <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(zone.zone.ilike(
+                    '%{}%'.format(search)), report.date >= search1)
+            elif search or search == "undefined":
+                query = query.filter(zone.zone.ilike('%{}%'.format(search)))
+
+        elif search_type == 4:
+            if search2 or search2 == "undefined":
+                query = query.filter(user.name.ilike('%{}%'.format(search)), report.date >= search1,
+                                     report.date <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(user.name.ilike(
+                    '%{}%'.format(search)), report.date >= search1)
+            elif search or search == "undefined":
+                query = query.filter(user.name.ilike('%{}%'.format(search)))
+        elif search_type == 5:
+            if search2 or search2 == "undefined":
+                query = query.filter(company.name.ilike('%{}%'.format(search)), report.date >= search1,
+                                     report.date <= search2)
+            elif search1 or search1 == "undefined":
+                query = query.filter(company.name.ilike(
+                    '%{}%'.format(search)), report.date >= search1)
+            elif search or search == "undefined":
+                query = query.filter(company.name.ilike('%{}%'.format(search)))
+
+        elif search_type == 6:
+            query = query.filter(item.name.ilike('%{}%'.format(search)))
+
+    if (sorting == None or sorting == "undefined" or sorting == ""):
+        query = query.order_by(report.id.desc())
+    else:
+        if sorting == "ascending":
+            if sortingColumn == "history":
+                query = query.order_by(report.date.asc())
+            elif sortingColumn == "user":
+                query = query.order_by(user.name.asc())
+            elif sortingColumn == "zone":
+                query = query.order_by(zone.zone.asc())
+            elif sortingColumn == "doctor":
+                query = query.order_by(doctor.name.asc())
+            elif sortingColumn == "pharmacy":
+                query = query.order_by(pharmacy.name.asc())
+
+        else:
+            if sortingColumn == "history":
+                query = query.order_by(report.date.desc())
+            elif sortingColumn == "user":
+                query = query.order_by(user.name.desc())
+            elif sortingColumn == "zone":
+                query = query.order_by(zone.zone.desc())
+            elif sortingColumn == "doctor":
+                query = query.order_by(doctor.name.desc())
+            elif sortingColumn == "pharmacy":
+                query = query.order_by(pharmacy.name.desc())
+
+    reports = paginate(request, query)
+    current_reports = [r.detail() for r in reports]
+
+    for date in current_reports:
         last_pharmacy_order_query = history_of_pharmacy.query.join(order, order.id == history_of_pharmacy.order_id).filter(
             history_of_pharmacy.pharmacy_id == date['pharmacy_id']).order_by(order.date_of_order.desc()).first()
         if last_pharmacy_order_query:
@@ -102,16 +267,21 @@ def get_reports_detail(token):
         date['history'] = str(
             date['history'])
 
+    pages = ceil(query.count() / THINGS_PER_PAGE)
+
     result = {
 
         "success": True,
-        "reports": reports
+        "reports": current_reports,
+        "pages": pages,
+        "sorting": sorting,
+        "sortingColumn": sortingColumn,
     }
     return jsonify(result), 200
 
 
-@AdminRoutes.route("/users-detail", methods=["GET"])
-@requires_auth("admin:role")
+@ AdminRoutes.route("/users-detail", methods=["GET"])
+@ requires_auth("admin:role")
 def get_users_detail(token):
     query = user.query.join(zone, zone.id == user.zone_id).filter(
         user.role == 3).all()
@@ -129,8 +299,8 @@ def get_users_detail(token):
     return jsonify(result), 200
 
 
-@AdminRoutes.route("/salesmen-detail", methods=["GET"])
-@requires_auth("admin:role")
+@ AdminRoutes.route("/salesmen-detail", methods=["GET"])
+@ requires_auth("admin:role")
 def get_salesmen_detail(token):
     query = user.query.filter(
         user.role == 3).all()
@@ -172,8 +342,8 @@ def get_salesmen_detail(token):
     return jsonify(result), 200
 
 
-@AdminRoutes.route("/doctors-detail", methods=["GET"])
-@requires_auth("admin:role")
+@ AdminRoutes.route("/doctors-detail", methods=["GET"])
+@ requires_auth("admin:role")
 def get_doctors_detail(token):
     query = doctor.query.join(zone, zone.id == doctor.zone_id).all()
 
